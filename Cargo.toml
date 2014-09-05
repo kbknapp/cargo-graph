@@ -1,0 +1,5 @@
+[package]
+
+name = "rust-deps-graph"
+version = "0.0.1"
+authors = ["Max New <maxsnew@gmail.com>"]
