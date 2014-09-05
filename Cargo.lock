@@ -1,0 +1,12 @@
+[root]
+name = "rust-deps-graph"
+version = "0.0.1"
+dependencies = [
+ "toml 0.1.0 (git+https://github.com/alexcrichton/toml-rs#d40724ad2d6516d7b6750515153b4c360d63afe9)",
+]
+
+[[package]]
+name = "toml"
+version = "0.1.0"
+source = "git+https://github.com/alexcrichton/toml-rs#d40724ad2d6516d7b6750515153b4c360d63afe9"
+

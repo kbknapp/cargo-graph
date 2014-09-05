@@ -3,3 +3,6 @@
 name = "rust-deps-graph"
 version = "0.0.1"
 authors = ["Max New <maxsnew@gmail.com>"]
+
+[dependencies.toml]
+git = "https://github.com/alexcrichton/toml-rs"
