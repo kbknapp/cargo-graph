@@ -2,15 +2,14 @@ extern crate toml;
 extern crate graphviz;
 
 use graphviz as dot;
-use std::collections::HashMap;
-use std::io::{File};
+use std::io::File;
 use std::str;
 
 fn main() {
-    let (name, direct_deps) = read_cargo_toml("Cargo.toml");
+    let (name, indirect_deps) = read_cargo_lock("Cargo.lock");
+    let direct_deps           = read_cargo_toml("Cargo.toml");
     let mut nodes    = vec!(name).append(direct_deps.as_slice());
     let mut edges    = range(1, nodes.len()).map(|n| (0, n)).collect();
-    let indirect_deps = read_cargo_lock("Cargo.lock");
     
     add_deps(&mut nodes, &mut edges, indirect_deps);
     
@@ -20,16 +19,16 @@ fn main() {
     graph.render_to(&mut f);
 }
 
-fn read_cargo_toml(toml_file_name: &str) -> (String, Vec<String>) {
+fn read_cargo_toml(toml_file_name: &str) -> (Vec<String>) {
     let toml_str = File::open(&Path::new(toml_file_name)).read_to_string().unwrap();
     let toml     = toml::Parser::new(toml_str.as_slice()).parse().unwrap();
-    let name     =
-        toml.find(&"package".to_string()).unwrap().as_table().unwrap().find(&"name".to_string()).unwrap();
-    (name.as_str().unwrap().to_string(), vec!("toml".to_string()))
+    let deps: Vec<String> =
+        toml.find(&"dependencies".to_string()).unwrap().as_table().unwrap().keys().map(|s| s.to_string()).collect();
+    deps
 }
 
-fn read_cargo_lock(_lock_file_name: &str) -> (Vec<(&str, Vec<&str>)>) {
-    vec!(("toml", vec!("boodl")))
+fn read_cargo_lock(_lock_file_name: &str) -> (String, Vec<(&str, Vec<&str>)>) {
+    ("cargo".to_string(), vec!())
 }
 
 fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, deps: Vec<(&str, Vec<&str>)>) {
@@ -44,7 +43,7 @@ fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, deps: Vec<(&
 
 fn add_or_find<'a>(nodes: &mut Vec<String>, new: &'a str) -> uint {
     for i in range(0, nodes.len()) {
-        let s = nodes.get(i);
+        let ref s = (*nodes)[i];
         if s.as_slice() == new {
             return i
         }
