@@ -1,5 +1,5 @@
 digraph example3 {
-    N0[label="rust-deps-graph"];
+    N0[label="cargo-dot"];
     N1[label="toml"];
     N0 -> N1[label=""];
 }
