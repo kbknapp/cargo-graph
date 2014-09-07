@@ -6,11 +6,9 @@ use std::io::File;
 use std::str;
 
 fn main() {
-    let (name, indirect_deps) = read_cargo_lock("Cargo.lock");
-    let direct_deps           = read_cargo_toml("Cargo.toml");
-    let mut nodes    = vec!(name).append(direct_deps.as_slice());
-    let mut edges    = range(1, nodes.len()).map(|n| (0, n)).collect();
-    
+    let (name, direct_deps, indirect_deps) = read_cargo_lock("Cargo.lock");
+    let mut nodes = vec!(name).append(direct_deps.as_slice());
+    let mut edges = range(1, nodes.len()).map(|n| (0, n)).collect();
     add_deps(&mut nodes, &mut edges, indirect_deps);
     
     let graph = Graph { nodes: nodes, edges: edges };
@@ -19,19 +17,45 @@ fn main() {
     graph.render_to(&mut f);
 }
 
-fn read_cargo_toml(toml_file_name: &str) -> (Vec<String>) {
-    let toml_str = File::open(&Path::new(toml_file_name)).read_to_string().unwrap();
-    let toml     = toml::Parser::new(toml_str.as_slice()).parse().unwrap();
-    let deps: Vec<String> =
-        toml.find(&"dependencies".to_string()).unwrap().as_table().unwrap().keys().map(|s| s.to_string()).collect();
-    deps
+fn read_cargo_lock(file_name: &str) -> (String, Vec<String>, Vec<(String, Vec<String>)>) {
+    let toml = read_toml(file_name);
+    let root = toml.find(&"root".to_string()).unwrap()
+                   .as_table().unwrap();
+    let name = root.find(&"name".to_string()).unwrap()
+                   .as_str().unwrap().to_string();
+    let direct_deps = extract_deps(root);
+    let all_deps = toml.find(&"package".to_string()).unwrap()
+                       .as_slice().unwrap().iter().map(other_deps).collect();
+    (name, direct_deps, all_deps)
 }
 
-fn read_cargo_lock(_lock_file_name: &str) -> (String, Vec<(&str, Vec<&str>)>) {
-    ("cargo".to_string(), vec!())
+fn extract_deps(v: &toml::Table) -> Vec<String> {
+    match v.find(&"dependencies".to_string()) {
+        None     => vec!(),
+        Some(ds) => ds.as_slice().unwrap().iter()
+                      .map(|v| parse_dep(v.as_str().unwrap())).collect()
+    }
 }
 
-fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, deps: Vec<(&str, Vec<&str>)>) {
+fn other_deps(v: &toml::Value) -> (String, Vec<String>) {
+    let t = v.as_table().unwrap();
+    let name = t.find(&"name".to_string()).unwrap()
+                .as_str().unwrap().to_string();
+    let deps = extract_deps(t);
+    (name, deps)
+}
+
+fn read_toml(file_name: &str) -> toml::Table {
+    let toml_str = File::open(&Path::new(file_name)).read_to_string().unwrap();
+    toml::Parser::new(toml_str.as_slice()).parse().unwrap()
+
+}
+
+fn parse_dep(s: &str) -> String {
+    s.chars().take_while(|&a| a != ' ').collect()
+}
+
+fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, deps: Vec<(String, Vec<String>)>) {
     for (crat, crate_deps) in deps.move_iter() {
         let idl = add_or_find(nodes, crat);
         for dep in crate_deps.move_iter() {
@@ -41,14 +65,14 @@ fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, deps: Vec<(&
     }
 }
 
-fn add_or_find<'a>(nodes: &mut Vec<String>, new: &'a str) -> uint {
+fn add_or_find(nodes: &mut Vec<String>, new: String) -> uint {
     for i in range(0, nodes.len()) {
         let ref s = (*nodes)[i];
-        if s.as_slice() == new {
+        if *s == new {
             return i
         }
     }
-    nodes.push(new.to_string());
+    nodes.push(new);
     nodes.len() - 1
 }
 
