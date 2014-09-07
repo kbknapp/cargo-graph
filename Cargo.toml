@@ -1,5 +1,5 @@
 [package]
-name = "rust-deps-graph"
+name = "cargo-dot"
 version = "0.0.1"
 authors = ["Max New <maxsnew@gmail.com>"]
 
