@@ -1,5 +1,5 @@
-rust-deps-graph
-===============
+cargo-dot
+=========
 
 A tool to graph transitive dependencies for rust projects using Cargo
 
