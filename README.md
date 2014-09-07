@@ -15,8 +15,8 @@ dot -Tsvg Cargo.dot > Cargo.svg
 
 Examples
 --------
-![rust-deps-graph dependencies](etc/rust-deps-graph.svg)
+![rust-deps-graph dependencies](etc/rust-deps-graph.png)
 
-![cargo dependencies](etc/cargo.svg)
+![cargo dependencies](etc/cargo.png)
 
-![servo dependencies](etc/servo.svg)
+![servo dependencies](etc/servo.png)
