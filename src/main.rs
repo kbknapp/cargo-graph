@@ -18,23 +18,32 @@ Options:
     -h, --help         Show this message
     -V, --version      Print version info and exit
     --lock-file=FILE   Specify location of input file, default \"Cargo.lock\"
+    --dot-file=FILE    Specify location of output file, default \"Cargo.dot\"
 ")
 
 fn main() {
     let config = docopt::Config { version: Some("0.1.0".to_string()) , ..docopt::DEFAULT_CONFIG };
     let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
-    println!("{}", flags);
-    let lock_file = if flags.flag_lock_file.is_empty() { "Cargo.lock".to_string() } else { flags.flag_lock_file };
-
+    let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock".to_string());
+    let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot".to_string());
+    
     let (name, direct_deps, indirect_deps) = read_cargo_lock(lock_file.as_slice());
     let mut nodes = vec!(name).append(direct_deps.as_slice());
     let mut edges = range(1, nodes.len()).map(|n| (0, n)).collect();
     add_deps(&mut nodes, &mut edges, indirect_deps);
     
     let graph = Graph { nodes: nodes, edges: edges };
-    let mut f    = File::create(&Path::new("Cargo.dot"));
+    let mut f = File::create(&Path::new(dot_file));
     
     graph.render_to(&mut f);
+}
+
+fn unless_empty(s: String, default: String) -> String {
+    if s.is_empty() {
+        default
+    } else {
+        s
+    }
 }
 
 fn read_cargo_lock(file_name: &str) -> (String, Vec<String>, Vec<(String, Vec<String>)>) {
