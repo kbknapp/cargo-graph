@@ -1,7 +1,18 @@
 [package]
 name = "cargo-dot"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Max New <maxsnew@gmail.com>"]
 
 [dependencies.toml]
 git = "https://github.com/alexcrichton/toml-rs"
+
+[dependencies.docopt]
+git = "https://github.com/docopt/docopt.rs"
+
+[dependencies.docopt_macros]
+git = "https://github.com/docopt/docopt.rs"
+
+[[bin]]
+name = "cargo-dot"
+test = false
+doc = false

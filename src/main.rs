@@ -1,12 +1,32 @@
-extern crate toml;
+#![feature(phase)]
+extern crate serialize;
+#[phase(plugin)] extern crate docopt_macros;
+extern crate docopt;
 extern crate graphviz;
+extern crate toml;
 
+use docopt::{Error, FlagParser};
 use graphviz as dot;
 use std::io::File;
 use std::str;
 
+docopt!(Flags, "
+Usage: cargo dot [options]
+       cargo dot --help
+
+Options:
+    -h, --help         Show this message
+    -V, --version      Print version info and exit
+    --lock-file=FILE   Specify location of input file, default \"Cargo.lock\"
+")
+
 fn main() {
-    let (name, direct_deps, indirect_deps) = read_cargo_lock("Cargo.lock");
+    let config = docopt::Config { version: Some("0.1.0".to_string()) , ..docopt::DEFAULT_CONFIG };
+    let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
+    println!("{}", flags);
+    let lock_file = if flags.flag_lock_file.is_empty() { "Cargo.lock".to_string() } else { flags.flag_lock_file };
+
+    let (name, direct_deps, indirect_deps) = read_cargo_lock(lock_file.as_slice());
     let mut nodes = vec!(name).append(direct_deps.as_slice());
     let mut edges = range(1, nodes.len()).map(|n| (0, n)).collect();
     add_deps(&mut nodes, &mut edges, indirect_deps);
