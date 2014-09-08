@@ -34,13 +34,10 @@ fn main() {
     let resolved = cargo::ops::load_lockfile(&Path::new(lock_file), &dummy_src_id)
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
                      .unwrap_or_else(||  exit_with("Lock file not found."));
-    let root = resolved.root();
-    let name = root.get_name();
-    let mut nodes = vec!(name);
-    let mut edges = vec!();
-    add_deps(&mut nodes, &mut edges, &resolved);
 
-    let graph = Graph { nodes: nodes, edges: edges };
+    let mut graph = Graph::with_root(resolved.root().get_name());
+    graph.add_dependancies(&resolved);
+
     let mut f = File::create(&Path::new(dot_file));
 
     graph.render_to(&mut f);
@@ -58,42 +55,46 @@ fn unless_empty(s: String, default: &str) -> String {
     }
 }
 
-fn add_deps<'a>(nodes: &mut Vec<&'a str>, edges: &mut Vec<(uint, uint)>, resolved: &'a Resolve) {
-    for crat in resolved.iter() {
-        match resolved.deps(crat) {
-            Some(mut crate_deps) => {
-                let name = crat.get_name();
-                let idl = add_or_find(nodes, name);
-                for dep in crate_deps {
-                    let dep_name = dep.get_name();
-                    let idr = add_or_find(nodes, dep_name);
-                    edges.push((idl, idr));
-                };
-            },
-            None => { }
-        }
-    }
-}
-
-fn add_or_find<'a>(nodes: &mut Vec<&'a str>, new: &'a str) -> uint {
-    for (i, s) in nodes.iter().enumerate() {
-        if s.as_slice() == new {
-            return i
-        }
-    }
-    nodes.push(new);
-    nodes.len() - 1
-}
-
-type Nd = uint;
-type Ed = (uint, uint);
-struct Graph<'a> {
+pub type Nd = uint;
+pub type Ed = (uint, uint);
+pub struct Graph<'a> {
     nodes: Vec<&'a str>,
     edges: Vec<Ed>,
 }
 
 impl<'a> Graph<'a> {
-    fn render_to<W:Writer>(&'a self, output: &mut W) {
+    pub fn with_root(root: &str) -> Graph {
+        Graph { nodes: vec![root], edges: vec![] }
+    }
+
+    pub fn add_dependancies(&mut self, resolved: &'a Resolve) {
+        for crat in resolved.iter() {
+            match resolved.deps(crat) {
+                Some(mut crate_deps) => {
+                    let name = crat.get_name();
+                    let idl = self.find_or_add(name);
+                    for dep in crate_deps {
+                        let dep_name = dep.get_name();
+                        let idr = self.find_or_add(dep_name);
+                        self.edges.push((idl, idr));
+                    };
+                },
+                None => { }
+            }
+        }
+    }
+
+    fn find_or_add(&mut self, new: &'a str) -> uint {
+        for (i, s) in self.nodes.iter().enumerate() {
+            if s.as_slice() == new {
+                return i
+            }
+        }
+        self.nodes.push(new);
+        self.nodes.len() - 1
+    }
+
+    pub fn render_to<W:Writer>(&'a self, output: &mut W) {
         dot::render(self, output).unwrap()
     }
 }
