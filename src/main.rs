@@ -86,10 +86,10 @@ fn add_or_find<'a>(nodes: &mut Vec<&'a str>, new: &'a str) -> uint {
 }
 
 type Nd = uint;
-type Ed<'a> = &'a (uint, uint);
+type Ed = (uint, uint);
 struct Graph<'a> {
     nodes: Vec<&'a str>,
-    edges: Vec<(uint,uint)>,
+    edges: Vec<Ed>,
 }
 
 impl<'a> Graph<'a> {
@@ -98,8 +98,10 @@ impl<'a> Graph<'a> {
     }
 }
 
-impl<'a> dot::Labeller<'a, Nd, Ed<'a>> for Graph<'a> {
-    fn graph_id(&'a self) -> dot::Id<'a> { dot::Id::new("example3") }
+impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
+    fn graph_id(&'a self) -> dot::Id<'a> {
+        dot::Id::new("example3")
+    }
     fn node_id(&'a self, n: &Nd) -> dot::Id {
         dot::Id::new(format!("N{:u}", *n))
     }
@@ -108,13 +110,13 @@ impl<'a> dot::Labeller<'a, Nd, Ed<'a>> for Graph<'a> {
     }
 }
 
-impl<'a> dot::GraphWalk<'a, Nd, Ed<'a>> for Graph<'a> {
+impl<'a> dot::GraphWalk<'a, Nd, Ed> for Graph<'a> {
     fn nodes(&'a self) -> dot::Nodes<'a,Nd> {
         range(0, self.nodes.len()).collect()
     }
-    fn edges(&'a self) -> dot::Edges<'a,Ed<'a>> {
-        self.edges.iter().collect()
+    fn edges(&'a self) -> dot::Edges<'a,Ed> {
+        dot::maybe_owned_vec::Borrowed(self.edges.as_slice())
     }
-    fn source(&self, e: &Ed) -> Nd { let &(s,_) = *e; s }
-    fn target(&self, e: &Ed) -> Nd { let &(_,t) = *e; t }
+    fn source(&self, &(s, _): &Ed) -> Nd { s }
+    fn target(&self, &(_, t): &Ed) -> Nd { t }
 }
