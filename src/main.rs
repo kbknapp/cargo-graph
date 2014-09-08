@@ -7,7 +7,6 @@ extern crate serialize;
 
 use cargo::core::resolver::Resolve;
 use cargo::core::source::SourceId;
-use cargo::core::package_id::PackageId;
 use docopt::{Error, FlagParser};
 use graphviz as dot;
 use std::io::File;
@@ -60,10 +59,8 @@ fn unless_empty(s: String, default: &str) -> String {
 }
 
 fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, resolved: &Resolve) {
-    let pkgs: Vec<&PackageId> = resolved.iter().collect();
-    for &crat in pkgs.iter() {
-        let may_deps = resolved.deps(crat);
-        match may_deps {
+    for crat in resolved.iter() {
+        match resolved.deps(crat) {
             Some(mut crate_deps) => {
                 let name = crat.get_name().to_string(); // TODO: move strs around to reduce allocation
                 let idl = add_or_find(nodes, name);
