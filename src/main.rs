@@ -27,8 +27,8 @@ Options:
 fn main() {
     let config = docopt::Config { version: Some("0.1.0".to_string()) , ..docopt::DEFAULT_CONFIG };
     let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
-    let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock".to_string());
-    let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot".to_string());
+    let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock");
+    let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot");
 
     // TODO: figure out how to get rid of this.
     let dummy_src_id = SourceId::from_url("git+https://github.com/doopdoop/dodoododo#b3a9dee814af4846267383c800999a42b295e0d2".to_string());
@@ -51,9 +51,9 @@ fn exit_with(s: &str) -> ! {
     fail!("Error parsing lockfile: {}", s)
 }
 
-fn unless_empty(s: String, default: String) -> String {
+fn unless_empty(s: String, default: &str) -> String {
     if s.is_empty() {
-        default
+        default.to_string()
     } else {
         s
     }
