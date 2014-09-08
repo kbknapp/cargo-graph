@@ -1,5 +1,10 @@
 digraph example3 {
     N0[label="cargo-dot"];
-    N1[label="toml"];
+    N1[label="docopt"];
+    N2[label="docopt_macros"];
+    N3[label="toml"];
     N0 -> N1[label=""];
+    N0 -> N2[label=""];
+    N0 -> N3[label=""];
+    N2 -> N1[label=""];
 }
