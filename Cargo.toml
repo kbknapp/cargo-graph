@@ -3,8 +3,8 @@ name = "cargo-dot"
 version = "0.1.0"
 authors = ["Max New <maxsnew@gmail.com>"]
 
-[dependencies.toml]
-git = "https://github.com/alexcrichton/toml-rs"
+[dependencies.cargo]
+git = "https://github.com/rust-lang/cargo"
 
 [dependencies.docopt]
 git = "https://github.com/docopt/docopt.rs"

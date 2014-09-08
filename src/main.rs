@@ -1,10 +1,13 @@
 #![feature(phase)]
-extern crate serialize;
-#[phase(plugin)] extern crate docopt_macros;
+extern crate cargo;
 extern crate docopt;
+#[phase(plugin)] extern crate docopt_macros;
 extern crate graphviz;
-extern crate toml;
+extern crate serialize;
 
+use cargo::core::resolver::Resolve;
+use cargo::core::source::SourceId;
+use cargo::core::package_id::PackageId;
 use docopt::{Error, FlagParser};
 use graphviz as dot;
 use std::io::File;
@@ -27,15 +30,25 @@ fn main() {
     let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock".to_string());
     let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot".to_string());
 
-    let (name, direct_deps, indirect_deps) = read_cargo_lock(lock_file.as_slice());
-    let mut nodes = vec!(name).append(direct_deps.as_slice());
-    let mut edges = range(1, nodes.len()).map(|n| (0, n)).collect();
-    add_deps(&mut nodes, &mut edges, indirect_deps);
+    // TODO: figure out how to get rid of this.
+    let dummy_src_id = SourceId::from_url("git+https://github.com/rust-lang/cargo#b3a9dee814af4846267383c800999a42b295e0d2".to_string());
+    let resolved = cargo::ops::load_lockfile(&Path::new(lock_file), &dummy_src_id)
+                     .unwrap_or_else(|e| exit_with(e.description().as_slice()))
+                     .unwrap_or_else(||  exit_with("Lock file not found."));
+    let root = resolved.root();
+    let name = root.get_name().to_string();
+    let mut nodes = vec!(name);
+    let mut edges = vec!();
+    add_deps(&mut nodes, &mut edges, &resolved);
 
     let graph = Graph { nodes: nodes, edges: edges };
     let mut f = File::create(&Path::new(dot_file));
 
     graph.render_to(&mut f);
+}
+
+fn exit_with(s: &str) -> ! {
+    fail!("Error parsing lockfile: {}", s)
 }
 
 fn unless_empty(s: String, default: String) -> String {
@@ -46,49 +59,21 @@ fn unless_empty(s: String, default: String) -> String {
     }
 }
 
-fn read_cargo_lock(file_name: &str) -> (String, Vec<String>, Vec<(String, Vec<String>)>) {
-    let toml = read_toml(file_name);
-    let root = toml.find(&"root".to_string()).unwrap()
-                   .as_table().unwrap();
-    let name = root.find(&"name".to_string()).unwrap()
-                   .as_str().unwrap().to_string();
-    let direct_deps = extract_deps(root);
-    let all_deps = toml.find(&"package".to_string()).unwrap()
-                       .as_slice().unwrap().iter().map(other_deps).collect();
-    (name, direct_deps, all_deps)
-}
-
-fn extract_deps(v: &toml::Table) -> Vec<String> {
-    match v.find(&"dependencies".to_string()) {
-        None     => vec!(),
-        Some(ds) => ds.as_slice().unwrap().iter()
-                      .map(|v| parse_dep(v.as_str().unwrap())).collect()
-    }
-}
-
-fn other_deps(v: &toml::Value) -> (String, Vec<String>) {
-    let t = v.as_table().unwrap();
-    let name = t.find(&"name".to_string()).unwrap()
-                .as_str().unwrap().to_string();
-    let deps = extract_deps(t);
-    (name, deps)
-}
-
-fn read_toml(file_name: &str) -> toml::Table {
-    let toml_str = File::open(&Path::new(file_name)).read_to_string().unwrap();
-    toml::Parser::new(toml_str.as_slice()).parse().unwrap()
-}
-
-fn parse_dep(s: &str) -> String {
-    s.chars().take_while(|&a| a != ' ').collect()
-}
-
-fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, deps: Vec<(String, Vec<String>)>) {
-    for (crat, crate_deps) in deps.move_iter() {
-        let idl = add_or_find(nodes, crat);
-        for dep in crate_deps.move_iter() {
-            let idr = add_or_find(nodes, dep);
-            edges.push((idl, idr));
+fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, resolved: &Resolve) {
+    let pkgs: Vec<&PackageId> = resolved.iter().collect();
+    for &crat in pkgs.iter() {
+        let may_deps = resolved.deps(crat);
+        match may_deps {
+            Some(mut crate_deps) => {
+                let name = crat.get_name().to_string(); // TODO: move strs around to reduce allocation
+                let idl = add_or_find(nodes, name);
+                for dep in crate_deps {
+                    let dep_name = dep.get_name().to_string(); // TODO: same
+                    let idr = add_or_find(nodes, dep_name);
+                    edges.push((idl, idr));
+                };
+            },
+            None => { }
         }
     }
 }

@@ -17,6 +17,4 @@ Examples
 --------
 ![cargo-dot dependencies](etc/cargo-dot.png)
 
-![cargo dependencies](etc/cargo.png)
-
 ![servo dependencies](etc/servo.png)
