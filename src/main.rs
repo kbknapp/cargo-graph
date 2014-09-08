@@ -31,7 +31,7 @@ fn main() {
     let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot".to_string());
 
     // TODO: figure out how to get rid of this.
-    let dummy_src_id = SourceId::from_url("git+https://github.com/rust-lang/cargo#b3a9dee814af4846267383c800999a42b295e0d2".to_string());
+    let dummy_src_id = SourceId::from_url("git+https://github.com/doopdoop/dodoododo#b3a9dee814af4846267383c800999a42b295e0d2".to_string());
     let resolved = cargo::ops::load_lockfile(&Path::new(lock_file), &dummy_src_id)
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
                      .unwrap_or_else(||  exit_with("Lock file not found."));
