@@ -26,15 +26,15 @@ fn main() {
     let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
     let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock".to_string());
     let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot".to_string());
-    
+
     let (name, direct_deps, indirect_deps) = read_cargo_lock(lock_file.as_slice());
     let mut nodes = vec!(name).append(direct_deps.as_slice());
     let mut edges = range(1, nodes.len()).map(|n| (0, n)).collect();
     add_deps(&mut nodes, &mut edges, indirect_deps);
-    
+
     let graph = Graph { nodes: nodes, edges: edges };
     let mut f = File::create(&Path::new(dot_file));
-    
+
     graph.render_to(&mut f);
 }
 
@@ -77,7 +77,6 @@ fn other_deps(v: &toml::Value) -> (String, Vec<String>) {
 fn read_toml(file_name: &str) -> toml::Table {
     let toml_str = File::open(&Path::new(file_name)).read_to_string().unwrap();
     toml::Parser::new(toml_str.as_slice()).parse().unwrap()
-
 }
 
 fn parse_dep(s: &str) -> String {
