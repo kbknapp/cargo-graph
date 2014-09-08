@@ -35,7 +35,7 @@ fn main() {
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
                      .unwrap_or_else(||  exit_with("Lock file not found."));
     let root = resolved.root();
-    let name = root.get_name().to_string();
+    let name = root.get_name();
     let mut nodes = vec!(name);
     let mut edges = vec!();
     add_deps(&mut nodes, &mut edges, &resolved);
@@ -58,14 +58,14 @@ fn unless_empty(s: String, default: &str) -> String {
     }
 }
 
-fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, resolved: &Resolve) {
+fn add_deps<'a>(nodes: &mut Vec<&'a str>, edges: &mut Vec<(uint, uint)>, resolved: &'a Resolve) {
     for crat in resolved.iter() {
         match resolved.deps(crat) {
             Some(mut crate_deps) => {
-                let name = crat.get_name().to_string(); // TODO: move strs around to reduce allocation
+                let name = crat.get_name();
                 let idl = add_or_find(nodes, name);
                 for dep in crate_deps {
-                    let dep_name = dep.get_name().to_string(); // TODO: same
+                    let dep_name = dep.get_name();
                     let idr = add_or_find(nodes, dep_name);
                     edges.push((idl, idr));
                 };
@@ -75,10 +75,9 @@ fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, resolved: &R
     }
 }
 
-fn add_or_find(nodes: &mut Vec<String>, new: String) -> uint {
-    for i in range(0, nodes.len()) {
-        let ref s = (*nodes)[i];
-        if *s == new {
+fn add_or_find<'a>(nodes: &mut Vec<&'a str>, new: &'a str) -> uint {
+    for (i, s) in nodes.iter().enumerate() {
+        if s.as_slice() == new {
             return i
         }
     }
@@ -88,17 +87,18 @@ fn add_or_find(nodes: &mut Vec<String>, new: String) -> uint {
 
 type Nd = uint;
 type Ed<'a> = &'a (uint, uint);
-struct Graph { nodes: Vec<String>,
-               edges: Vec<(uint,uint)>,
-             }
+struct Graph<'a> {
+    nodes: Vec<&'a str>,
+    edges: Vec<(uint,uint)>,
+}
 
-impl Graph {
-    fn render_to<W:Writer>(self, output: &mut W) {
-        dot::render(&self, output).unwrap()
+impl<'a> Graph<'a> {
+    fn render_to<W:Writer>(&'a self, output: &mut W) {
+        dot::render(self, output).unwrap()
     }
 }
 
-impl<'a> dot::Labeller<'a, Nd, Ed<'a>> for Graph {
+impl<'a> dot::Labeller<'a, Nd, Ed<'a>> for Graph<'a> {
     fn graph_id(&'a self) -> dot::Id<'a> { dot::Id::new("example3") }
     fn node_id(&'a self, n: &Nd) -> dot::Id {
         dot::Id::new(format!("N{:u}", *n))
@@ -108,7 +108,7 @@ impl<'a> dot::Labeller<'a, Nd, Ed<'a>> for Graph {
     }
 }
 
-impl<'a> dot::GraphWalk<'a, Nd, Ed<'a>> for Graph {
+impl<'a> dot::GraphWalk<'a, Nd, Ed<'a>> for Graph<'a> {
     fn nodes(&'a self) -> dot::Nodes<'a,Nd> {
         range(0, self.nodes.len()).collect()
     }
