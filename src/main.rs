@@ -7,7 +7,6 @@ extern crate serialize;
 
 use cargo::core::resolver::Resolve;
 use cargo::core::source::SourceId;
-use cargo::core::package_id::PackageId;
 use docopt::{Error, FlagParser};
 use graphviz as dot;
 use std::io::File;
@@ -27,21 +26,18 @@ Options:
 fn main() {
     let config = docopt::Config { version: Some("0.1.0".to_string()) , ..docopt::DEFAULT_CONFIG };
     let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
-    let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock".to_string());
-    let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot".to_string());
+    let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock");
+    let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot");
 
     // TODO: figure out how to get rid of this.
     let dummy_src_id = SourceId::from_url("git+https://github.com/doopdoop/dodoododo#b3a9dee814af4846267383c800999a42b295e0d2".to_string());
     let resolved = cargo::ops::load_lockfile(&Path::new(lock_file), &dummy_src_id)
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
                      .unwrap_or_else(||  exit_with("Lock file not found."));
-    let root = resolved.root();
-    let name = root.get_name().to_string();
-    let mut nodes = vec!(name);
-    let mut edges = vec!();
-    add_deps(&mut nodes, &mut edges, &resolved);
 
-    let graph = Graph { nodes: nodes, edges: edges };
+    let mut graph = Graph::with_root(resolved.root().get_name());
+    graph.add_dependancies(&resolved);
+
     let mut f = File::create(&Path::new(dot_file));
 
     graph.render_to(&mut f);
@@ -51,58 +47,62 @@ fn exit_with(s: &str) -> ! {
     fail!("Error parsing lockfile: {}", s)
 }
 
-fn unless_empty(s: String, default: String) -> String {
+fn unless_empty(s: String, default: &str) -> String {
     if s.is_empty() {
-        default
+        default.to_string()
     } else {
         s
     }
 }
 
-fn add_deps(nodes: &mut Vec<String>, edges: &mut Vec<(uint, uint)>, resolved: &Resolve) {
-    let pkgs: Vec<&PackageId> = resolved.iter().collect();
-    for &crat in pkgs.iter() {
-        let may_deps = resolved.deps(crat);
-        match may_deps {
-            Some(mut crate_deps) => {
-                let name = crat.get_name().to_string(); // TODO: move strs around to reduce allocation
-                let idl = add_or_find(nodes, name);
-                for dep in crate_deps {
-                    let dep_name = dep.get_name().to_string(); // TODO: same
-                    let idr = add_or_find(nodes, dep_name);
-                    edges.push((idl, idr));
-                };
-            },
-            None => { }
+pub type Nd = uint;
+pub type Ed = (uint, uint);
+pub struct Graph<'a> {
+    nodes: Vec<&'a str>,
+    edges: Vec<Ed>,
+}
+
+impl<'a> Graph<'a> {
+    pub fn with_root(root: &str) -> Graph {
+        Graph { nodes: vec![root], edges: vec![] }
+    }
+
+    pub fn add_dependancies(&mut self, resolved: &'a Resolve) {
+        for crat in resolved.iter() {
+            match resolved.deps(crat) {
+                Some(mut crate_deps) => {
+                    let name = crat.get_name();
+                    let idl = self.find_or_add(name);
+                    for dep in crate_deps {
+                        let dep_name = dep.get_name();
+                        let idr = self.find_or_add(dep_name);
+                        self.edges.push((idl, idr));
+                    };
+                },
+                None => { }
+            }
         }
     }
-}
 
-fn add_or_find(nodes: &mut Vec<String>, new: String) -> uint {
-    for i in range(0, nodes.len()) {
-        let ref s = (*nodes)[i];
-        if *s == new {
-            return i
+    fn find_or_add(&mut self, new: &'a str) -> uint {
+        for (i, s) in self.nodes.iter().enumerate() {
+            if s.as_slice() == new {
+                return i
+            }
         }
+        self.nodes.push(new);
+        self.nodes.len() - 1
     }
-    nodes.push(new);
-    nodes.len() - 1
-}
 
-type Nd = uint;
-type Ed<'a> = &'a (uint, uint);
-struct Graph { nodes: Vec<String>,
-               edges: Vec<(uint,uint)>,
-             }
-
-impl Graph {
-    fn render_to<W:Writer>(self, output: &mut W) {
-        dot::render(&self, output).unwrap()
+    pub fn render_to<W:Writer>(&'a self, output: &mut W) {
+        dot::render(self, output).unwrap()
     }
 }
 
-impl<'a> dot::Labeller<'a, Nd, Ed<'a>> for Graph {
-    fn graph_id(&'a self) -> dot::Id<'a> { dot::Id::new("example3") }
+impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
+    fn graph_id(&'a self) -> dot::Id<'a> {
+        dot::Id::new("example3")
+    }
     fn node_id(&'a self, n: &Nd) -> dot::Id {
         dot::Id::new(format!("N{:u}", *n))
     }
@@ -111,13 +111,13 @@ impl<'a> dot::Labeller<'a, Nd, Ed<'a>> for Graph {
     }
 }
 
-impl<'a> dot::GraphWalk<'a, Nd, Ed<'a>> for Graph {
+impl<'a> dot::GraphWalk<'a, Nd, Ed> for Graph<'a> {
     fn nodes(&'a self) -> dot::Nodes<'a,Nd> {
         range(0, self.nodes.len()).collect()
     }
-    fn edges(&'a self) -> dot::Edges<'a,Ed<'a>> {
-        self.edges.iter().collect()
+    fn edges(&'a self) -> dot::Edges<'a,Ed> {
+        dot::maybe_owned_vec::Borrowed(self.edges.as_slice())
     }
-    fn source(&self, e: &Ed) -> Nd { let &(s,_) = *e; s }
-    fn target(&self, e: &Ed) -> Nd { let &(_,t) = *e; t }
+    fn source(&self, &(s, _): &Ed) -> Nd { s }
+    fn target(&self, &(_, t): &Ed) -> Nd { t }
 }
