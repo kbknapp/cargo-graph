@@ -22,14 +22,14 @@ Options:
     -h, --help         Show this message
     -V, --version      Print version info and exit
     --lock-file=FILE   Specify location of input file, default \"Cargo.lock\"
-    --dot-file=FILE    Specify location of output file, default \"Cargo.dot\"
+    --dot-file=FILE    Output to file, default prints to stdout
 ")
 
 fn main() {
     let config = docopt::Config { version: Some("0.1.0".to_string()) , ..docopt::DEFAULT_CONFIG };
     let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
-    let lock_file = unless_empty(flags.flag_lock_file, "Cargo.lock");
-    let dot_file  = unless_empty(flags.flag_dot_file, "Cargo.dot");
+    let lock_file  = unless_empty(flags.flag_lock_file, "Cargo.lock");
+    let dot_f_flag = if flags.flag_dot_file.is_empty() { None } else { Some(flags.flag_dot_file) };
 
     // TODO: figure out how to get rid of this.
     let dummy_src_id = SourceId::from_url("git+https://github.com/doopdoop/dodoododo#b3a9dee814af4846267383c800999a42b295e0d2".to_string());
@@ -40,9 +40,11 @@ fn main() {
     let mut graph = Graph::with_root(resolved.root().get_name());
     graph.add_dependancies(&resolved);
 
-    let mut f = File::create(&Path::new(dot_file));
+    match dot_f_flag {
+        None           => graph.render_to(&mut std::io::stdio::stdout()),
+        Some(dot_file) => graph.render_to(&mut File::create(&Path::new(dot_file)))
+    };
 
-    graph.render_to(&mut f);
 }
 
 fn exit_with(s: &str) -> ! {
