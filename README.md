@@ -1,5 +1,5 @@
-cargo-dot
-=========
+cargo-dot [![Build Status](https://travis-ci.org/maxsnew/cargo-dot.svg?branch=master)](https://travis-ci.org/maxsnew/cargo-dot)
+=====================
 
 A tool to graph transitive dependencies for rust projects using Cargo
 
