@@ -13,6 +13,8 @@ use std::io::File;
 use std::str;
 
 docopt!(Flags, "
+Generate a graph of package dependencies in graphviz format
+
 Usage: cargo dot [options]
        cargo dot --help
 
