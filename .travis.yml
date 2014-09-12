@@ -1,1 +1,2 @@
 language: rust
+script: cargo build --verbose
