@@ -23,6 +23,8 @@ cargo dot | dot -Tsvg > Cargo.svg
 
 Examples
 --------
+This project's dependencies
 ![cargo-dot dependencies](etc/cargo-dot.png)
 
+Servo's dependencies
 ![servo dependencies](etc/servo.png)
