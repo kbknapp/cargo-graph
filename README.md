@@ -1,7 +1,7 @@
 cargo-dot [![Build Status](https://travis-ci.org/maxsnew/cargo-dot.svg?branch=master)](https://travis-ci.org/maxsnew/cargo-dot)
 =====================
 
-A tool to graph transitive dependencies for rust projects using Cargo
+A tool to graph transitive dependencies for Rust projects using Cargo
 
 Installation
 ------------
@@ -14,7 +14,7 @@ export PATH=$PATH:`pwd`/target
 
 Usage
 -----
-In a rust project using Cargo, run the following commands (assuming
+In a Rust project using Cargo, run the following commands (assuming
 cargo-dot is on your PATH)
 ```sh
 cargo build # If you don't have a Cargo.lock file
