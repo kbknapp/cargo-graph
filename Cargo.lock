@@ -2,122 +2,125 @@
 name = "cargo-dot"
 version = "0.1.0"
 dependencies = [
- "cargo 0.0.1-pre (git+https://github.com/rust-lang/cargo#b3a9dee814af4846267383c800999a42b295e0d2)",
- "docopt 0.6.3 (git+https://github.com/docopt/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99)",
- "docopt_macros 0.6.3 (git+https://github.com/docopt/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99)",
+ "cargo 0.0.1-pre (git+https://github.com/rust-lang/cargo#aa42fe5d434d9854ef775137984e42df965cea51)",
+ "docopt 0.6.4 (git+https://github.com/docopt/docopt.rs#21ce1190ef7631f71e52de5e13eb4d131564b82e)",
+ "docopt_macros 0.6.4 (git+https://github.com/docopt/docopt.rs#21ce1190ef7631f71e52de5e13eb4d131564b82e)",
 ]
 
 [[package]]
 name = "cargo"
 version = "0.0.1-pre"
-source = "git+https://github.com/rust-lang/cargo#b3a9dee814af4846267383c800999a42b295e0d2"
+source = "git+https://github.com/rust-lang/cargo#aa42fe5d434d9854ef775137984e42df965cea51"
 dependencies = [
- "docopt 0.6.3 (git+https://github.com/burntsushi/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99)",
- "docopt_macros 0.6.3 (git+https://github.com/burntsushi/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99)",
- "flate2 0.0.1 (git+https://github.com/alexcrichton/flate2-rs#2ccf4dc3cb613446c6f80fbe1d6950875417de29)",
- "git2 0.0.1 (git+https://github.com/alexcrichton/git2-rs#962d1f6983489bd401327a9be2d750c8ad3d48fe)",
- "glob 0.0.1 (git+https://github.com/rust-lang/glob#c4495d9f2f2a1b22173b860f907760ba8c419843)",
- "semver 0.0.1 (git+https://github.com/rust-lang/semver#df163f7b22686493b037eee1f1f9d1a2742f9bbe)",
- "tar 0.0.1 (git+https://github.com/alexcrichton/tar-rs#a87a4b9c8087922454a118bee97ecdaa1f8cbc18)",
- "toml 0.1.0 (git+https://github.com/alexcrichton/toml-rs#d40724ad2d6516d7b6750515153b4c360d63afe9)",
- "url 0.1.0 (git+https://github.com/servo/rust-url#d894135cac4e0085f41ba3a816240b792f9e6154)",
+ "curl 0.0.1 (git+https://github.com/alexcrichton/curl-rust?ref=bundle#720d87fa32c738c397252cf3c26d428bdca697d4)",
+ "docopt 0.6.4 (git+https://github.com/docopt/docopt.rs#21ce1190ef7631f71e52de5e13eb4d131564b82e)",
+ "docopt_macros 0.6.4 (git+https://github.com/docopt/docopt.rs#21ce1190ef7631f71e52de5e13eb4d131564b82e)",
+ "flate2 0.0.1 (git+https://github.com/alexcrichton/flate2-rs#2730aeaa87c04bef814d1c1fd5ba7bed7cbc5a4d)",
+ "git2 0.0.1 (git+https://github.com/alexcrichton/git2-rs#96b9500c0e5d37efff13749fc01837b15dc5ac72)",
+ "glob 0.0.1 (git+https://github.com/rust-lang/glob#27338cbd4736d3c8146294fc090c6f8f06c32d72)",
+ "semver 0.1.0 (git+https://github.com/rust-lang/semver#e7adaf4fa43f77408e640985cf3b3ec9ed81b5b8)",
+ "tar 0.0.1 (git+https://github.com/alexcrichton/tar-rs#e7c9952ea75a75688966b516d8bbefb740f54208)",
+ "toml 0.1.0 (git+https://github.com/alexcrichton/toml-rs#8cdb2747de86ea7de6491ce5ba5dc522421bed7f)",
+ "url 0.1.0 (git+https://github.com/servo/rust-url#29f70a47230c2aa736e263977247c786e0b2c243)",
 ]
 
 [[package]]
-name = "docopt"
-version = "0.6.3"
-source = "git+https://github.com/burntsushi/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99"
-
-[[package]]
-name = "docopt"
-version = "0.6.3"
-source = "git+https://github.com/docopt/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99"
-
-[[package]]
-name = "docopt_macros"
-version = "0.6.3"
-source = "git+https://github.com/burntsushi/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99"
+name = "curl"
+version = "0.0.1"
+source = "git+https://github.com/alexcrichton/curl-rust?ref=bundle#720d87fa32c738c397252cf3c26d428bdca697d4"
 dependencies = [
- "docopt 0.6.3 (git+https://github.com/docopt/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99)",
+ "curl-sys 0.0.1 (git+https://github.com/alexcrichton/curl-rust?ref=bundle#720d87fa32c738c397252cf3c26d428bdca697d4)",
+ "link-config 0.0.1 (git+https://github.com/alexcrichton/link-config#1d3cd271612036b47c015a55f33a97e1524569ae)",
+ "url 0.1.0 (git+https://github.com/servo/rust-url#29f70a47230c2aa736e263977247c786e0b2c243)",
 ]
 
 [[package]]
+name = "curl-sys"
+version = "0.0.1"
+source = "git+https://github.com/alexcrichton/curl-rust?ref=bundle#720d87fa32c738c397252cf3c26d428bdca697d4"
+
+[[package]]
+name = "docopt"
+version = "0.6.4"
+source = "git+https://github.com/docopt/docopt.rs#21ce1190ef7631f71e52de5e13eb4d131564b82e"
+
+[[package]]
 name = "docopt_macros"
-version = "0.6.3"
-source = "git+https://github.com/docopt/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99"
+version = "0.6.4"
+source = "git+https://github.com/docopt/docopt.rs#21ce1190ef7631f71e52de5e13eb4d131564b82e"
 dependencies = [
- "docopt 0.6.3 (git+https://github.com/docopt/docopt.rs#652c165c6c05629dee8a19af6c62103082582a99)",
+ "docopt 0.6.4 (git+https://github.com/docopt/docopt.rs#21ce1190ef7631f71e52de5e13eb4d131564b82e)",
 ]
 
 [[package]]
 name = "encoding"
 version = "0.1.0"
-source = "git+https://github.com/lifthrasiir/rust-encoding#35f0d70f65f73ba16f296f9ec675eddee661ba79"
+source = "git+https://github.com/lifthrasiir/rust-encoding#1d26487807127f221afd55492f8f40cc4e718648"
 
 [[package]]
 name = "flate2"
 version = "0.0.1"
-source = "git+https://github.com/alexcrichton/flate2-rs#2ccf4dc3cb613446c6f80fbe1d6950875417de29"
+source = "git+https://github.com/alexcrichton/flate2-rs#2730aeaa87c04bef814d1c1fd5ba7bed7cbc5a4d"
 
 [[package]]
 name = "git2"
 version = "0.0.1"
-source = "git+https://github.com/alexcrichton/git2-rs#962d1f6983489bd401327a9be2d750c8ad3d48fe"
+source = "git+https://github.com/alexcrichton/git2-rs#96b9500c0e5d37efff13749fc01837b15dc5ac72"
 dependencies = [
- "libgit2 0.0.1 (git+https://github.com/alexcrichton/git2-rs#962d1f6983489bd401327a9be2d750c8ad3d48fe)",
- "url 0.1.0 (git+https://github.com/servo/rust-url#d894135cac4e0085f41ba3a816240b792f9e6154)",
+ "libgit2 0.0.1 (git+https://github.com/alexcrichton/git2-rs#96b9500c0e5d37efff13749fc01837b15dc5ac72)",
+ "url 0.1.0 (git+https://github.com/servo/rust-url#29f70a47230c2aa736e263977247c786e0b2c243)",
 ]
 
 [[package]]
 name = "glob"
 version = "0.0.1"
-source = "git+https://github.com/rust-lang/glob#c4495d9f2f2a1b22173b860f907760ba8c419843"
+source = "git+https://github.com/rust-lang/glob#27338cbd4736d3c8146294fc090c6f8f06c32d72"
 
 [[package]]
 name = "libgit2"
 version = "0.0.1"
-source = "git+https://github.com/alexcrichton/git2-rs#962d1f6983489bd401327a9be2d750c8ad3d48fe"
+source = "git+https://github.com/alexcrichton/git2-rs#96b9500c0e5d37efff13749fc01837b15dc5ac72"
 dependencies = [
- "libssh2-static-sys 0.0.1 (git+https://github.com/alexcrichton/libssh2-static-sys#9db278a48dd4f137f7ca75d20bddeb43a71a00ed)",
- "link-config 0.0.1 (git+https://github.com/alexcrichton/link-config#e378605ce4099008b1dab8f39619d91dc8887946)",
- "openssl-static-sys 0.0.1 (git+https://github.com/alexcrichton/openssl-static-sys#b8f2500c39932e9d022dcc2590493ab0cc144e2a)",
+ "libssh2-static-sys 0.0.1 (git+https://github.com/alexcrichton/libssh2-static-sys#6a5d3ad7b62db6ca0721c528402f4976a1876036)",
+ "link-config 0.0.1 (git+https://github.com/alexcrichton/link-config#1d3cd271612036b47c015a55f33a97e1524569ae)",
+ "openssl-static-sys 0.0.1 (git+https://github.com/alexcrichton/openssl-static-sys#40c6aa58a878645b2f2a6f0270da7f1c3088a22c)",
 ]
 
 [[package]]
 name = "libssh2-static-sys"
 version = "0.0.1"
-source = "git+https://github.com/alexcrichton/libssh2-static-sys#9db278a48dd4f137f7ca75d20bddeb43a71a00ed"
+source = "git+https://github.com/alexcrichton/libssh2-static-sys#6a5d3ad7b62db6ca0721c528402f4976a1876036"
 
 [[package]]
 name = "link-config"
 version = "0.0.1"
-source = "git+https://github.com/alexcrichton/link-config#e378605ce4099008b1dab8f39619d91dc8887946"
+source = "git+https://github.com/alexcrichton/link-config#1d3cd271612036b47c015a55f33a97e1524569ae"
 
 [[package]]
 name = "openssl-static-sys"
 version = "0.0.1"
-source = "git+https://github.com/alexcrichton/openssl-static-sys#b8f2500c39932e9d022dcc2590493ab0cc144e2a"
+source = "git+https://github.com/alexcrichton/openssl-static-sys#40c6aa58a878645b2f2a6f0270da7f1c3088a22c"
 
 [[package]]
 name = "semver"
-version = "0.0.1"
-source = "git+https://github.com/rust-lang/semver#df163f7b22686493b037eee1f1f9d1a2742f9bbe"
+version = "0.1.0"
+source = "git+https://github.com/rust-lang/semver#e7adaf4fa43f77408e640985cf3b3ec9ed81b5b8"
 
 [[package]]
 name = "tar"
 version = "0.0.1"
-source = "git+https://github.com/alexcrichton/tar-rs#a87a4b9c8087922454a118bee97ecdaa1f8cbc18"
+source = "git+https://github.com/alexcrichton/tar-rs#e7c9952ea75a75688966b516d8bbefb740f54208"
 
 [[package]]
 name = "toml"
 version = "0.1.0"
-source = "git+https://github.com/alexcrichton/toml-rs#d40724ad2d6516d7b6750515153b4c360d63afe9"
+source = "git+https://github.com/alexcrichton/toml-rs#8cdb2747de86ea7de6491ce5ba5dc522421bed7f"
 
 [[package]]
 name = "url"
 version = "0.1.0"
-source = "git+https://github.com/servo/rust-url#d894135cac4e0085f41ba3a816240b792f9e6154"
+source = "git+https://github.com/servo/rust-url#29f70a47230c2aa736e263977247c786e0b2c243"
 dependencies = [
- "encoding 0.1.0 (git+https://github.com/lifthrasiir/rust-encoding#35f0d70f65f73ba16f296f9ec675eddee661ba79)",
+ "encoding 0.1.0 (git+https://github.com/lifthrasiir/rust-encoding#1d26487807127f221afd55492f8f40cc4e718648)",
 ]
 
