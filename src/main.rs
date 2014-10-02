@@ -37,7 +37,7 @@ fn main() {
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
                      .unwrap_or_else(||  exit_with("Lock file not found."));
 
-    let graph = Graph::with_root(resolved.root().get_name());
+    let mut graph = Graph::with_root(resolved.root().get_name());
     graph.add_dependencies(&resolved);
 
     match dot_f_flag {
@@ -104,10 +104,10 @@ impl<'a> Graph<'a> {
 }
 
 impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
-    fn graph_id(&'a self) -> dot::Id<'a> {
+    fn graph_id(&self) -> dot::Id<'a> {
         dot::Id::new("example3")
     }
-    fn node_id(&'a self, n: &Nd) -> dot::Id {
+    fn node_id(&self, n: &Nd) -> dot::Id {
         dot::Id::new(format!("N{:u}", *n))
     }
     fn node_label<'a>(&'a self, i: &Nd) -> dot::LabelText<'a> {
@@ -116,7 +116,7 @@ impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
 }
 
 impl<'a> dot::GraphWalk<'a, Nd, Ed> for Graph<'a> {
-    fn nodes(&'a self) -> dot::Nodes<'a,Nd> {
+    fn nodes(&self) -> dot::Nodes<'a,Nd> {
         range(0, self.nodes.len()).collect()
     }
     fn edges(&'a self) -> dot::Edges<'a,Ed> {
