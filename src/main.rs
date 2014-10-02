@@ -37,8 +37,8 @@ fn main() {
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
                      .unwrap_or_else(||  exit_with("Lock file not found."));
 
-    let mut graph = Graph::with_root(resolved.root().get_name());
-    graph.add_dependancies(&resolved);
+    let graph = Graph::with_root(resolved.root().get_name());
+    graph.add_dependencies(&resolved);
 
     match dot_f_flag {
         None           => graph.render_to(&mut std::io::stdio::stdout()),
@@ -71,7 +71,7 @@ impl<'a> Graph<'a> {
         Graph { nodes: vec![root], edges: vec![] }
     }
 
-    pub fn add_dependancies(&mut self, resolved: &'a Resolve) {
+    pub fn add_dependencies(&mut self, resolved: &'a Resolve) {
         for crat in resolved.iter() {
             match resolved.deps(crat) {
                 Some(mut crate_deps) => {
