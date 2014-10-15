@@ -5,8 +5,7 @@ extern crate docopt;
 extern crate graphviz;
 extern crate serialize;
 
-use cargo::core::resolver::Resolve;
-use cargo::core::source::SourceId;
+use cargo::core::{Resolve, SourceId, PackageId};
 use docopt::{Error, FlagParser};
 use graphviz as dot;
 use std::io::File;
@@ -23,6 +22,7 @@ Options:
     -V, --version      Print version info and exit
     --lock-file=FILE   Specify location of input file, default \"Cargo.lock\"
     --dot-file=FILE    Output to file, default prints to stdout
+    --source-labels    Use sources for the label instead of package names
 ")
 
 fn main() {
@@ -30,14 +30,17 @@ fn main() {
     let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
     let lock_file  = unless_empty(flags.flag_lock_file, "Cargo.lock");
     let dot_f_flag = if flags.flag_dot_file.is_empty() { None } else { Some(flags.flag_dot_file) };
+    let source_labels = flags.flag_source_labels;
 
-    // TODO: figure out how to get rid of this.
-    let dummy_src_id = SourceId::from_url("git+https://github.com/doopdoop/dodoododo#b3a9dee814af4846267383c800999a42b295e0d2".to_string());
-    let resolved = cargo::ops::load_lockfile(&Path::new(lock_file), &dummy_src_id)
+    let lock_file = Path::new(lock_file);
+    let project_dir = Path::new(lock_file.dirname());
+    let project_dir = std::os::make_absolute(&project_dir);
+    let src_id = SourceId::for_path(&project_dir).unwrap();
+    let resolved = cargo::ops::load_lockfile(&lock_file, &src_id)
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
                      .unwrap_or_else(||  exit_with("Lock file not found."));
 
-    let mut graph = Graph::with_root(resolved.root().get_name());
+    let mut graph = Graph::with_root(resolved.root(), source_labels);
     graph.add_dependencies(&resolved);
 
     match dot_f_flag {
@@ -62,24 +65,23 @@ fn unless_empty(s: String, default: &str) -> String {
 pub type Nd = uint;
 pub type Ed = (uint, uint);
 pub struct Graph<'a> {
-    nodes: Vec<&'a str>,
+    nodes: Vec<&'a PackageId>,
     edges: Vec<Ed>,
+    source_labels: bool
 }
 
 impl<'a> Graph<'a> {
-    pub fn with_root(root: &str) -> Graph {
-        Graph { nodes: vec![root], edges: vec![] }
+    pub fn with_root(root: &PackageId, source_labels: bool) -> Graph {
+        Graph { nodes: vec![root], edges: vec![], source_labels: source_labels }
     }
 
     pub fn add_dependencies(&mut self, resolved: &'a Resolve) {
         for crat in resolved.iter() {
             match resolved.deps(crat) {
                 Some(mut crate_deps) => {
-                    let name = crat.get_name();
-                    let idl = self.find_or_add(name);
+                    let idl = self.find_or_add(crat);
                     for dep in crate_deps {
-                        let dep_name = dep.get_name();
-                        let idr = self.find_or_add(dep_name);
+                        let idr = self.find_or_add(dep);
                         self.edges.push((idl, idr));
                     };
                 },
@@ -88,9 +90,9 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn find_or_add(&mut self, new: &'a str) -> uint {
-        for (i, s) in self.nodes.iter().enumerate() {
-            if s.as_slice() == new {
+    fn find_or_add(&mut self, new: &'a PackageId) -> uint {
+        for (i, id) in self.nodes.iter().enumerate() {
+            if *id == new {
                 return i
             }
         }
@@ -111,7 +113,11 @@ impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
         dot::Id::new(format!("N{:u}", *n))
     }
     fn node_label<'a>(&'a self, i: &Nd) -> dot::LabelText<'a> {
-        dot::LabelStr(str::Slice(self.nodes[*i].as_slice()))
+        if !self.source_labels {
+            dot::LabelStr(str::Slice(self.nodes[*i].get_name()))
+        } else {
+            dot::LabelStr(str::Owned(self.nodes[*i].get_source_id().url.to_string()))
+        }
     }
 }
 
