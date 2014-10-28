@@ -107,7 +107,7 @@ impl<'a> Graph<'a> {
 
 impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
     fn graph_id(&self) -> dot::Id<'a> {
-        dot::Id::new("example3")
+        dot::Id::new("dependencies")
     }
     fn node_id(&self, n: &Nd) -> dot::Id {
         dot::Id::new(format!("N{:u}", *n))
