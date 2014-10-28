@@ -15,4 +15,4 @@ git = "https://github.com/docopt/docopt.rs"
 [[bin]]
 name = "cargo-dot"
 test = false
-doc = false
+doc = true
