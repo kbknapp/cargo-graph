@@ -116,7 +116,7 @@ impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
         if !self.source_labels {
             dot::LabelStr(str::Slice(self.nodes[*i].get_name()))
         } else {
-            dot::LabelStr(str::Owned(self.nodes[*i].get_source_id().url.to_string()))
+            dot::LabelStr(str::Owned(self.nodes[*i].get_source_id().get_url().to_string()))
         }
     }
 }
