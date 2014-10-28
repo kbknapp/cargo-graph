@@ -101,13 +101,26 @@ impl<'a> Graph<'a> {
     }
 
     pub fn render_to<W:Writer>(&'a self, output: &mut W) {
-        dot::render(self, output).unwrap()
+        match dot::render(self, output) {
+            Ok(_) => {},
+            Err(e) => fail!("error rendering graph: {}", e)
+        }
     }
 }
 
 impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
     fn graph_id(&self) -> dot::Id<'a> {
-        dot::Id::new("dependencies")
+        if self.nodes.is_empty() || !self.nodes[0].get_name().chars().all(is_valid) {
+            return dot::Id::new("dependencies")
+        } else {
+            return dot::Id::new(self.nodes[0].get_name())
+        }
+        fn is_valid(c: char) -> bool {
+            in_range('a',c,'z') || in_range('A', c, 'Z') || in_range('0', c, '9') || c == '_'
+        }
+        fn in_range(low: char, mid: char, hi: char) -> bool {
+            low as uint <= mid as uint && mid as uint <= hi as uint
+        }
     }
     fn node_id(&self, n: &Nd) -> dot::Id {
         dot::Id::new(format!("N{:u}", *n))
