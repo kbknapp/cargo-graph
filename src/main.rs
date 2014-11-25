@@ -1,3 +1,4 @@
+#![feature(slicing_syntax)]
 #![feature(phase)]
 extern crate cargo;
 extern crate docopt;
@@ -14,6 +15,7 @@ docopt!(Flags, "
 Generate a graph of package dependencies in graphviz format
 
 Usage: cargo dot [options]
+       cargo dot --help
 
 Options:
     -h, --help         Show this message
@@ -25,9 +27,12 @@ Options:
 
 fn main() {
     let flags: Flags = Flags::docopt()
+                             // cargo passes the exe name first, so we skip it
+                             .argv(std::os::args().into_iter().skip(1))
                              .version(Some("0.2".to_string()))
                              .decode()
                              .unwrap_or_else(|e| e.exit());
+    println!("what")
     let lock_file  = unless_empty(flags.flag_lock_file, "Cargo.lock");
     let dot_f_flag = if flags.flag_dot_file.is_empty() { None } else { Some(flags.flag_dot_file) };
     let source_labels = flags.flag_source_labels;
