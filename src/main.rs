@@ -6,7 +6,6 @@ extern crate graphviz;
 extern crate serialize;
 
 use cargo::core::{Resolve, SourceId, PackageId};
-use docopt::{Error, FlagParser};
 use graphviz as dot;
 use std::io::File;
 use std::str;
@@ -15,7 +14,6 @@ docopt!(Flags, "
 Generate a graph of package dependencies in graphviz format
 
 Usage: cargo dot [options]
-       cargo dot --help
 
 Options:
     -h, --help         Show this message
@@ -26,15 +24,17 @@ Options:
 ")
 
 fn main() {
-    let config = docopt::Config { version: Some("0.1.0".to_string()) , ..docopt::DEFAULT_CONFIG };
-    let flags: Flags = FlagParser::parse_conf(config).unwrap_or_else(|e| e.exit());
+    let flags: Flags = Flags::docopt()
+                             .version(Some("0.2".to_string()))
+                             .decode()
+                             .unwrap_or_else(|e| e.exit());
     let lock_file  = unless_empty(flags.flag_lock_file, "Cargo.lock");
     let dot_f_flag = if flags.flag_dot_file.is_empty() { None } else { Some(flags.flag_dot_file) };
     let source_labels = flags.flag_source_labels;
 
     let lock_file = Path::new(lock_file);
     let project_dir = Path::new(lock_file.dirname());
-    let project_dir = std::os::make_absolute(&project_dir);
+    let project_dir = std::os::make_absolute(&project_dir).unwrap();
     let src_id = SourceId::for_path(&project_dir).unwrap();
     let resolved = cargo::ops::load_lockfile(&lock_file, &src_id)
                      .unwrap_or_else(|e| exit_with(e.description().as_slice()))
@@ -51,7 +51,7 @@ fn main() {
 }
 
 fn exit_with(s: &str) -> ! {
-    fail!("Error parsing lockfile: {}", s)
+    panic!("Error parsing lockfile: {}", s)
 }
 
 fn unless_empty(s: String, default: &str) -> String {
@@ -103,27 +103,18 @@ impl<'a> Graph<'a> {
     pub fn render_to<W:Writer>(&'a self, output: &mut W) {
         match dot::render(self, output) {
             Ok(_) => {},
-            Err(e) => fail!("error rendering graph: {}", e)
+            Err(e) => panic!("error rendering graph: {}", e)
         }
     }
 }
 
 impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
     fn graph_id(&self) -> dot::Id<'a> {
-        if self.nodes.is_empty() || !self.nodes[0].get_name().chars().all(is_valid) {
-            return dot::Id::new("dependencies")
-        } else {
-            return dot::Id::new(self.nodes[0].get_name())
-        }
-        fn is_valid(c: char) -> bool {
-            in_range('a',c,'z') || in_range('A', c, 'Z') || in_range('0', c, '9') || c == '_'
-        }
-        fn in_range(low: char, mid: char, hi: char) -> bool {
-            low as uint <= mid as uint && mid as uint <= hi as uint
-        }
+        dot::Id::new(self.nodes[0].get_name()).unwrap_or(dot::Id::new("dependencies").unwrap())
     }
     fn node_id(&self, n: &Nd) -> dot::Id {
-        dot::Id::new(format!("N{:u}", *n))
+        // unwrap is safe because N######## is a valid graphviz id
+        dot::Id::new(format!("N{}", *n)).unwrap()
     }
     fn node_label<'a>(&'a self, i: &Nd) -> dot::LabelText<'a> {
         if !self.source_labels {
