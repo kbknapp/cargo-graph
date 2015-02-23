@@ -3,14 +3,13 @@ name = "cargo-dot"
 version = "0.1.0"
 authors = ["Max New <maxsnew@gmail.com>"]
 
+[dependencies]
+docopt = "*"
+docopt_macros = "*"
+rustc-serialize = "*"
+
 [dependencies.cargo]
 git = "https://github.com/rust-lang/cargo"
-
-[dependencies.docopt]
-git = "https://github.com/docopt/docopt.rs"
-
-[dependencies.docopt_macros]
-git = "https://github.com/docopt/docopt.rs"
 
 [[bin]]
 name = "cargo-dot"

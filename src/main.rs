@@ -1,15 +1,18 @@
-#![feature(slicing_syntax)]
-#![feature(phase)]
+#![feature(rustc_private, plugin, old_io, path, fs, io, env, old_path)]
+#![plugin(docopt_macros)]
+
 extern crate cargo;
 extern crate docopt;
-#[phase(plugin)] extern crate docopt_macros;
 extern crate graphviz;
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 
+use std::borrow::{Cow, IntoCow};
 use cargo::core::{Resolve, SourceId, PackageId};
 use graphviz as dot;
-use std::io::File;
-use std::str;
+use std::env;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path as NewPath;
 
 docopt!(Flags, "
 Generate a graph of package dependencies in graphviz format
@@ -23,12 +26,12 @@ Options:
     --lock-file=FILE   Specify location of input file, default \"Cargo.lock\"
     --dot-file=FILE    Output to file, default prints to stdout
     --source-labels    Use sources for the label instead of package names
-")
+");
 
 fn main() {
     let flags: Flags = Flags::docopt()
                              // cargo passes the exe name first, so we skip it
-                             .argv(std::os::args().into_iter().skip(1))
+                             .argv(env::args().skip(1))
                              .version(Some("0.2".to_string()))
                              .decode()
                              .unwrap_or_else(|e| e.exit());
@@ -36,26 +39,25 @@ fn main() {
     let dot_f_flag = if flags.flag_dot_file.is_empty() { None } else { Some(flags.flag_dot_file) };
     let source_labels = flags.flag_source_labels;
 
-    let lock_file = Path::new(lock_file);
-    let project_dir = Path::new(lock_file.dirname());
-    let project_dir = std::os::make_absolute(&project_dir).unwrap();
+    let lock_file = Path::new(&lock_file);
+    let project_dir = lock_file.dir_path();
+    let project_dir = std::env::current_dir().unwrap().join(&project_dir);
     let src_id = SourceId::for_path(&project_dir).unwrap();
-    let resolved = cargo::ops::load_lockfile(&lock_file, &src_id)
-                     .unwrap_or_else(|e| exit_with(e.description().as_slice()))
-                     .unwrap_or_else(||  exit_with("Lock file not found."));
+    let resolved = cargo::ops::load_lockfile(&lock_file, &src_id).unwrap()
+        .expect("Lock file not found.");
 
     let mut graph = Graph::with_root(resolved.root(), source_labels);
     graph.add_dependencies(&resolved);
 
+    let mut buf: Vec<u8> = Vec::new();
     match dot_f_flag {
-        None           => graph.render_to(&mut std::io::stdio::stdout()),
-        Some(dot_file) => graph.render_to(&mut File::create(&Path::new(dot_file)))
+        None           => graph.render_to(&mut std::old_io::stdio::stdout()),
+        Some(dot_file) => {
+            graph.render_to(&mut buf);
+            File::create(NewPath::new(&dot_file)).map(|mut f| f.write(&buf)).unwrap();
+        }
     };
 
-}
-
-fn exit_with(s: &str) -> ! {
-    panic!("Error parsing lockfile: {}", s)
 }
 
 fn unless_empty(s: String, default: &str) -> String {
@@ -66,8 +68,8 @@ fn unless_empty(s: String, default: &str) -> String {
     }
 }
 
-pub type Nd = uint;
-pub type Ed = (uint, uint);
+pub type Nd = usize;
+pub type Ed = (usize, usize);
 pub struct Graph<'a> {
     nodes: Vec<&'a PackageId>,
     edges: Vec<Ed>,
@@ -82,7 +84,7 @@ impl<'a> Graph<'a> {
     pub fn add_dependencies(&mut self, resolved: &'a Resolve) {
         for crat in resolved.iter() {
             match resolved.deps(crat) {
-                Some(mut crate_deps) => {
+                Some(crate_deps) => {
                     let idl = self.find_or_add(crat);
                     for dep in crate_deps {
                         let idr = self.find_or_add(dep);
@@ -94,7 +96,7 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn find_or_add(&mut self, new: &'a PackageId) -> uint {
+    fn find_or_add(&mut self, new: &'a PackageId) -> usize {
         for (i, id) in self.nodes.iter().enumerate() {
             if *id == new {
                 return i
@@ -114,27 +116,27 @@ impl<'a> Graph<'a> {
 
 impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
     fn graph_id(&self) -> dot::Id<'a> {
-        dot::Id::new(self.nodes[0].get_name()).unwrap_or(dot::Id::new("dependencies").unwrap())
+        dot::Id::new(self.nodes[0].name()).unwrap_or(dot::Id::new("dependencies").unwrap())
     }
     fn node_id(&self, n: &Nd) -> dot::Id {
         // unwrap is safe because N######## is a valid graphviz id
         dot::Id::new(format!("N{}", *n)).unwrap()
     }
-    fn node_label<'a>(&'a self, i: &Nd) -> dot::LabelText<'a> {
+    fn node_label(&'a self, i: &Nd) -> dot::LabelText<'a> {
         if !self.source_labels {
-            dot::LabelStr(str::Slice(self.nodes[*i].get_name()))
+            dot::LabelText::LabelStr(self.nodes[*i].name().into_cow())
         } else {
-            dot::LabelStr(str::Owned(self.nodes[*i].get_source_id().get_url().to_string()))
+            dot::LabelText::LabelStr(self.nodes[*i].source_id().url().to_string().into_cow())
         }
     }
 }
 
 impl<'a> dot::GraphWalk<'a, Nd, Ed> for Graph<'a> {
     fn nodes(&self) -> dot::Nodes<'a,Nd> {
-        range(0, self.nodes.len()).collect()
+        (0..self.nodes.len()).collect()
     }
-    fn edges(&'a self) -> dot::Edges<'a,Ed> {
-        dot::maybe_owned_vec::Borrowed(self.edges.as_slice())
+    fn edges(&self) -> dot::Edges<Ed> {
+        Cow::Borrowed(&self.edges[..])
     }
     fn source(&self, &(s, _): &Ed) -> Nd { s }
     fn target(&self, &(_, t): &Ed) -> Nd { t }
