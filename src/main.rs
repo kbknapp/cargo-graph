@@ -1,4 +1,4 @@
-#![feature(rustc_private, plugin, old_io, path, fs, io, env, old_path)]
+#![feature(rustc_private, plugin, old_io, env, old_path)]
 #![plugin(docopt_macros)]
 
 extern crate cargo;
@@ -6,13 +6,13 @@ extern crate docopt;
 extern crate graphviz;
 extern crate "rustc-serialize" as rustc_serialize;
 
-use std::borrow::{Cow, IntoCow};
 use cargo::core::{Resolve, SourceId, PackageId};
 use graphviz as dot;
+use std::borrow::{Cow, IntoCow};
 use std::env;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path as NewPath;
+use std::old_io as io;
+use std::old_io::fs::File;
+use std::old_path::Path;
 
 docopt!(Flags, "
 Generate a graph of package dependencies in graphviz format
@@ -49,13 +49,9 @@ fn main() {
     let mut graph = Graph::with_root(resolved.root(), source_labels);
     graph.add_dependencies(&resolved);
 
-    let mut buf: Vec<u8> = Vec::new();
     match dot_f_flag {
-        None           => graph.render_to(&mut std::old_io::stdio::stdout()),
-        Some(dot_file) => {
-            graph.render_to(&mut buf);
-            File::create(NewPath::new(&dot_file)).map(|mut f| f.write(&buf)).unwrap();
-        }
+        None           => graph.render_to(&mut io::stdio::stdout()),
+        Some(dot_file) => graph.render_to(&mut File::create(&Path::new(&dot_file)).unwrap())
     };
 
 }
