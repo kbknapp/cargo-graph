@@ -8,7 +8,7 @@ Installation
 In this project's directory, build the project and then add the binary to your `PATH`.
 ```sh
 cargo build
-export PATH=$PATH:`pwd`/target
+export PATH=$PATH:`pwd`/target/debug
 ```
 
 This will likely fail when used with the latest Rust nightly. If so, try
