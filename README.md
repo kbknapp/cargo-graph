@@ -42,4 +42,3 @@ This project's dependencies
 
 Servo's dependencies
 ![servo dependencies](etc/servo.png)
-

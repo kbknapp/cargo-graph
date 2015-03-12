@@ -37,9 +37,6 @@ fn main() {
     if argv.len() > 0 {
         argv[0] = "cargo".to_string();
     }
-    for s in argv.clone() {
-        println!("{}", s);
-    }
     let flags: Flags = Flags::docopt()
                              // cargo passes the exe name first, so we skip it
                              .argv(argv.into_iter())
@@ -68,7 +65,6 @@ fn main() {
         None           => graph.render_to(&mut io::stdout()),
         Some(dot_file) => graph.render_to(&mut File::create(&Path::new(&dot_file)).unwrap())
     };
-    
 }
 
 fn absolutize(pb: PathBuf) -> PathBuf {
