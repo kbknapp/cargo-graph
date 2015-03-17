@@ -1,4 +1,4 @@
-#![feature(rustc_private, plugin, io, old_io, path)]
+#![feature(rustc_private, plugin, std_misc)]
 #![plugin(docopt_macros)]
 
 extern crate cargo;
@@ -11,9 +11,6 @@ use graphviz as dot;
 use std::borrow::{Cow, IntoCow};
 use std::env;
 use std::io;
-use std::io::ErrorKind as EK;
-use std::old_io;
-use std::old_io::IoErrorKind as IOEK;
 use std::io::Write;
 use std::fs::File;
 use std::path::{Path, PathBuf, AsPath};
@@ -122,7 +119,7 @@ impl<'a> Graph<'a> {
     }
 
     pub fn render_to<W:Write>(&'a self, output: &mut W) {
-        match dot::render(self, &mut WriterCompat::new(output)) {
+        match dot::render(self, output) {
             Ok(_) => {},
             Err(e) => panic!("error rendering graph: {}", e)
         }
@@ -155,41 +152,4 @@ impl<'a> dot::GraphWalk<'a, Nd, Ed> for Graph<'a> {
     }
     fn source(&self, &(s, _): &Ed) -> Nd { s }
     fn target(&self, &(_, t): &Ed) -> Nd { t }
-}
-
-struct WriterCompat<'a, W: 'a> {
-    write: &'a mut W
-}
-
-impl<'a, W> WriterCompat<'a, W> {
-    fn new(w: &'a mut W) -> WriterCompat<'a, W> {
-        WriterCompat { write: w }
-    }
-}
-
-impl<'a, W: Write> Writer for WriterCompat<'a, W> {
-    fn write_all(&mut self, buf: &[u8]) -> old_io::IoResult<()> {
-        self.write.write_all(buf)
-            .map_err(|e| {
-                let kind = match e.kind() {
-                    EK::FileNotFound => IOEK::FileNotFound,
-                    EK::PermissionDenied => IOEK::PermissionDenied,
-                    EK::ConnectionRefused => IOEK::ConnectionRefused,
-                    EK::ConnectionReset => IOEK::ConnectionReset,
-                    EK::ConnectionAborted => IOEK::ConnectionAborted,
-                    EK::NotConnected => IOEK::NotConnected,
-                    EK::BrokenPipe => IOEK::BrokenPipe,
-                    EK::PathAlreadyExists => IOEK::PathAlreadyExists,
-                    EK::PathDoesntExist => IOEK::PathDoesntExist,
-                    EK::MismatchedFileTypeForOperation => IOEK::MismatchedFileTypeForOperation,
-                    EK::ResourceUnavailable => IOEK::ResourceUnavailable,
-                    EK::InvalidInput => IOEK::InvalidInput,
-                    EK::TimedOut => IOEK::TimedOut,
-                    _ => IOEK::OtherIoError,
-                };
-                old_io::IoError { kind: kind,
-                                  desc: "",
-                                  detail: e.detail() }
-            })
-    }
 }
