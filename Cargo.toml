@@ -9,8 +9,7 @@ docopt_macros = "*"
 rustc-serialize = "*"
 
 [dependencies.cargo]
-git = "https://github.com/alexcrichton/cargo"
-branch = "update"
+git = "https://github.com/rust-lang/cargo"
 
 [[bin]]
 name = "cargo-dot"
