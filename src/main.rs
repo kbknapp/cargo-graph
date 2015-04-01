@@ -1,14 +1,15 @@
-#![feature(rustc_private, plugin, std_misc)]
+#![feature(convert, plugin, rustc_private, std_misc)]
 #![plugin(docopt_macros)]
 
 extern crate cargo;
 extern crate docopt;
 extern crate graphviz;
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 
 use cargo::core::{Resolve, SourceId, PackageId};
 use graphviz as dot;
-use std::borrow::{Cow, IntoCow};
+use std::borrow::{Cow};
+use std::convert::Into;
 use std::env;
 use std::io;
 use std::io::Write;
@@ -136,9 +137,9 @@ impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
     }
     fn node_label(&'a self, i: &Nd) -> dot::LabelText<'a> {
         if !self.source_labels {
-            dot::LabelText::LabelStr(self.nodes[*i].name().into_cow())
+            dot::LabelText::LabelStr(self.nodes[*i].name().into())
         } else {
-            dot::LabelText::LabelStr(self.nodes[*i].source_id().url().to_string().into_cow())
+            dot::LabelText::LabelStr(self.nodes[*i].source_id().url().to_string().into())
         }
     }
 }
