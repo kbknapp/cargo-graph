@@ -1,4 +1,4 @@
-#![feature(convert, plugin, rustc_private, std_misc)]
+#![feature(plugin, rustc_private)]
 #![plugin(docopt_macros)]
 
 extern crate cargo;
