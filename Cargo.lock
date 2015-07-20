@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "cargo 0.4.0 (git+https://github.com/rust-lang/cargo)",
  "docopt 0.6.67 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dot 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -93,6 +94,11 @@ dependencies = [
  "rustc-serialize 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "strsim 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "dot"
+version = "0.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "env_logger"

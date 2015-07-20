@@ -1,13 +1,10 @@
-#![feature(rustc_private)]
-
 extern crate cargo;
 extern crate docopt;
-extern crate graphviz;
+extern crate dot;
 extern crate rustc_serialize;
 
 use cargo::core::{Resolve, SourceId, PackageId};
 use docopt::Docopt;
-use graphviz as dot;
 use std::borrow::{Cow};
 use std::convert::Into;
 use std::env;

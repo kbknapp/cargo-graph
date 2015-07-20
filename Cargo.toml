@@ -6,6 +6,7 @@ authors = ["Max New <maxsnew@gmail.com>"]
 [dependencies]
 docopt = "*"
 rustc-serialize = "*"
+dot = "*"
 
 [dependencies.cargo]
 git = "https://github.com/rust-lang/cargo"
