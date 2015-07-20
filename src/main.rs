@@ -14,7 +14,7 @@ use std::env;
 use std::io;
 use std::io::Write;
 use std::fs::File;
-use std::path::{Path, PathBuf, AsPath};
+use std::path::{Path, PathBuf};
 
 docopt!(Flags, "
 Generate a graph of package dependencies in graphviz format
