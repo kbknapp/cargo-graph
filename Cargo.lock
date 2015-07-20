@@ -4,7 +4,6 @@ version = "0.1.0"
 dependencies = [
  "cargo 0.4.0 (git+https://github.com/rust-lang/cargo)",
  "docopt 0.6.67 (registry+https://github.com/rust-lang/crates.io-index)",
- "docopt_macros 0.6.67 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -93,14 +92,6 @@ dependencies = [
  "regex 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "strsim 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "docopt_macros"
-version = "0.6.67"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "docopt 0.6.67 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

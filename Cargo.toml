@@ -5,7 +5,6 @@ authors = ["Max New <maxsnew@gmail.com>"]
 
 [dependencies]
 docopt = "*"
-docopt_macros = "*"
 rustc-serialize = "*"
 
 [dependencies.cargo]

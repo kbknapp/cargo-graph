@@ -1,5 +1,4 @@
-#![feature(plugin, rustc_private)]
-#![plugin(docopt_macros)]
+#![feature(rustc_private)]
 
 extern crate cargo;
 extern crate docopt;
@@ -7,6 +6,7 @@ extern crate graphviz;
 extern crate rustc_serialize;
 
 use cargo::core::{Resolve, SourceId, PackageId};
+use docopt::Docopt;
 use graphviz as dot;
 use std::borrow::{Cow};
 use std::convert::Into;
@@ -16,7 +16,7 @@ use std::io::Write;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
-docopt!(Flags, "
+static USAGE: &'static str = "
 Generate a graph of package dependencies in graphviz format
 
 Usage: cargo dot [options]
@@ -28,20 +28,26 @@ Options:
     --lock-file=FILE   Specify location of input file, default \"Cargo.lock\"
     --dot-file=FILE    Output to file, default prints to stdout
     --source-labels    Use sources for the label instead of package names
-");
+";
+
+#[derive(RustcDecodable, Debug)]
+struct Flags {
+    flag_help: bool,
+    flag_version: bool,
+    flag_lock_file: String,
+    flag_dot_file: String,
+    flag_source_labels: bool,
+}
+
 
 fn main() {
     let mut argv: Vec<String> = env::args().collect();
     if argv.len() > 0 {
         argv[0] = "cargo".to_string();
     }
-    let flags: Flags = Flags::docopt()
-                             // cargo passes the exe name first, so we skip it
-                             .argv(argv.into_iter())
-                             .version(Some("0.2".to_string()))
-                             .decode()
-                             .unwrap_or_else(|e|
-                                             e.exit());
+    let flags: Flags = Docopt::new(USAGE)
+                             .and_then(|d| d.decode())
+                             .unwrap_or_else(|e| e.exit());
 
     let dot_f_flag = if flags.flag_dot_file.is_empty() { None } else { Some(flags.flag_dot_file) };
     let source_labels = flags.flag_source_labels;
