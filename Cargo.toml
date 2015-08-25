@@ -3,15 +3,18 @@ name = "cargo-dot"
 version = "0.1.0"
 authors = ["Max New <maxsnew@gmail.com>"]
 
-[dependencies]
-docopt = "*"
-rustc-serialize = "*"
-dot = "*"
-
-[dependencies.cargo]
-git = "https://github.com/rust-lang/cargo"
-
 [[bin]]
 name = "cargo-dot"
 test = false
 doc = true
+
+[dependencies]
+toml = "~0.1.22"
+clap = "~1.2.5"
+
+[features]
+default = []
+unstable = []
+nightly = []
+debug = []
+

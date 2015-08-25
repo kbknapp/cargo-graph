@@ -1,159 +1,157 @@
-extern crate cargo;
-extern crate docopt;
-extern crate dot;
-extern crate rustc_serialize;
+#![cfg_attr(feature = "nightly", feature(plugin))]
+#![cfg_attr(feature = "lints", plugin(clippy))]
+#![cfg_attr(feature = "lints", deny(warnings))]
+#![cfg_attr(feature = "lints", allow(option_unwrap_used))]
 
-use cargo::core::{Resolve, SourceId, PackageId};
-use docopt::Docopt;
-use std::borrow::{Cow};
-use std::convert::Into;
-use std::env;
-use std::io;
-use std::io::Write;
+extern crate toml;
+#[macro_use]
+extern crate clap;
+
+use std::ascii::AsciiExt;
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::io::{self, Write};
+use std::path::Path;
 
-static USAGE: &'static str = "
-Generate a graph of package dependencies in graphviz format
+use clap::{App, AppSettings, Arg, SubCommand, ArgMatches};
 
-Usage: cargo dot [options]
-       cargo dot --help
+use error::{CliError, CliResult};
+use config::Config;
+use project::Project;
 
-Options:
-    -h, --help         Show this message
-    -V, --version      Print version info and exit
-    --lock-file=FILE   Specify location of input file, default \"Cargo.lock\"
-    --dot-file=FILE    Output to file, default prints to stdout
-    --source-labels    Use sources for the label instead of package names
-";
+#[macro_use]
+mod macros;
+mod error;
+mod graph;
+mod fmt;
+mod project;
+mod dep;
+mod config;
 
-#[derive(RustcDecodable, Debug)]
-struct Flags {
-    flag_help: bool,
-    flag_version: bool,
-    flag_lock_file: String,
-    flag_dot_file: String,
-    flag_source_labels: bool,
+arg_enum! {
+    #[derive(Debug, Copy, Clone)]
+    pub enum LineStyle {
+        Solid,
+        Dotted,
+        Dashed
+    }
 }
 
+static LINE_STYLES: [&'static str; 3] = ["solid", "dotted", "dashed"];
+
+fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
+    App::new("cargo-dot")
+        .version(&*format!("v{}", crate_version!()))
+        // We have to lie about our binary name since this will be a third party
+        // subcommand for cargo but we want usage strings to generated properly
+        .bin_name("cargo")
+        // Global version uses the version we supplied (Cargo.toml) for all subcommands as well
+        .settings(&[AppSettings::GlobalVersion,
+                    AppSettings::SubcommandRequired])
+        // We use a subcommand because everything parsed after `cargo` is sent to the third party 
+        // plugin which will then be interpreted as a subcommand/positional arg by clap
+        .subcommand(SubCommand::with_name("dot")
+            .author("Max New")
+            .about("Generate a graph of package dependencies in graphviz format")
+            // Here we list the valid arguments. There are less verbose was to do this with clap
+            // using "usage strings"; but because we want to set some additional properties not
+            // available to "usage string" syntax, we set them individually 
+            //
+            // The two properites we need to set which aren't available to usage strings are
+            // 'value_name()' which sets name for the argument inside help messages and usage
+            // strings displayed to the user. The default is to use the name with which we access
+            // the arg values later, but in this case we want two arguments to have the same "name"
+            // such as "FILE" which would conflict. This setting allows us to work around that
+            // conflict.
+            //
+            // The second setting is 'possible_values()' which defines a set of valid values for
+            // the argument. The benefit to using this setting (which isn't mandatory to accept
+            // a specific set of values) is the user will have all values presented to them in
+            // help messages automatically, and will receive suggestions when they typo a specific
+            // value.
+            .args(vec![
+                Arg::with_name("lock-file")
+                    .help("Specify location of .lock file (Default \'Cargo.lock\')")
+                    .long("lock-file")
+                    .value_name("FILE")
+                    .validator(is_file)
+                    .takes_value(true),
+                Arg::with_name("manifest-file")
+                    .help("Specify location of manifest file (Default \'Cargo.toml\')")
+                    .long("manifest-file")
+                    .value_name("FILE")
+                    .validator(is_file)
+                    .takes_value(true),
+                Arg::with_name("dot-file")
+                    .help("Output file (Default to stdout)")
+                    .long("dot-file")
+                    .takes_value(true)
+                    .value_name("FILE"),
+                Arg::with_name("dev-deps")
+                    .help("Should dev deps be included in the graph? (Defaults to \'false\'){n}\
+                           ex. --dev-deps=true OR --dev-deps=yes")
+                    .long("--dev-deps")
+                    .takes_value(true)
+                    .value_name("true|false"),
+                Arg::with_name("build-deps")
+                    .help("Should build deps be in the graph? (Defaults to \'true\'){n}\
+                           ex. --build-deps=false OR --build-deps=no")
+                    .long("--build-deps")
+                    .takes_value(true)
+                    .value_name("true|false"),
+                Arg::with_name("optional-deps")
+                    .help("Should opitonal deps be in the graph? (Defaults to \'true\'){n}\
+                           ex. --optional-deps=false OR --optional-deps=no")
+                    .long("--optional-deps")
+                    .takes_value(true)
+                    .value_name("true|false"),
+                Arg::with_name("dev-style")
+                    .help("Line style for dev deps (Defaults to \'solid\'){n}")
+                    .long("dev-line-style")
+                    .takes_value(true)
+                    .value_name("STYLE")
+                    .possible_values(&LINE_STYLES),
+                Arg::with_name("optional-style")
+                    .help("Line style for optional deps (Defaults to \'solid\'){n}")
+                    .long("optional-line-style")
+                    .takes_value(true)
+                    .value_name("STYLE")
+                    .possible_values(&LINE_STYLES),
+                Arg::with_name("build-style")
+                    .help("Line style for build deps (Defaults to \'solid\'){n}")
+                    .long("build-line-style")
+                    .takes_value(true)
+                    .value_name("STYLE")
+                    .possible_values(&LINE_STYLES)]))
+        .get_matches()
+}
 
 fn main() {
-    let mut argv: Vec<String> = env::args().collect();
-    if argv.len() > 0 {
-        argv[0] = "cargo".to_string();
-    }
-    let flags: Flags = Docopt::new(USAGE)
-                             .and_then(|d| d.decode())
-                             .unwrap_or_else(|e| e.exit());
+    let m = parse_cli();
 
-    let dot_f_flag = if flags.flag_dot_file.is_empty() { None } else { Some(flags.flag_dot_file) };
-    let source_labels = flags.flag_source_labels;
-
-    let lock_path = unless_empty(flags.flag_lock_file, "Cargo.lock");
-    let lock_path = Path::new(&lock_path);
-    let lock_path_buf = absolutize(lock_path.to_path_buf());
-    let lock_path = lock_path_buf.as_path();
-
-    let proj_dir  = lock_path.parent().unwrap(); // TODO: check for None
-    let src_id = SourceId::for_path(&proj_dir).unwrap();
-    let resolved = cargo::ops::load_lockfile(&lock_path, &src_id).unwrap()
-        .expect("Lock file not found.");
-
-    let mut graph = Graph::with_root(resolved.root(), source_labels);
-    graph.add_dependencies(&resolved);
-
-    match dot_f_flag {
-        None           => graph.render_to(&mut io::stdout()),
-        Some(dot_file) => graph.render_to(&mut File::create(&Path::new(&dot_file)).unwrap())
-    };
-}
-
-fn absolutize(pb: PathBuf) -> PathBuf {
-    if pb.as_path().is_absolute() {
-        pb
-    } else {
-        std::env::current_dir().unwrap().join(&pb.as_path()).clone()
-    }
-}
-
-fn unless_empty(s: String, default: &str) -> String {
-    if s.is_empty() {
-        default.to_string()
-    } else {
-        s
-    }
-}
-
-pub type Nd = usize;
-pub type Ed = (usize, usize);
-pub struct Graph<'a> {
-    nodes: Vec<&'a PackageId>,
-    edges: Vec<Ed>,
-    source_labels: bool
-}
-
-impl<'a> Graph<'a> {
-    pub fn with_root(root: &PackageId, source_labels: bool) -> Graph {
-        Graph { nodes: vec![root], edges: vec![], source_labels: source_labels }
-    }
-
-    pub fn add_dependencies(&mut self, resolved: &'a Resolve) {
-        for crat in resolved.iter() {
-            match resolved.deps(crat) {
-                Some(crate_deps) => {
-                    let idl = self.find_or_add(crat);
-                    for dep in crate_deps {
-                        let idr = self.find_or_add(dep);
-                        self.edges.push((idl, idr));
-                    };
-                },
-                None => { }
-            }
-        }
-    }
-
-    fn find_or_add(&mut self, new: &'a PackageId) -> usize {
-        for (i, id) in self.nodes.iter().enumerate() {
-            if *id == new {
-                return i
-            }
-        }
-        self.nodes.push(new);
-        self.nodes.len() - 1
-    }
-
-    pub fn render_to<W:Write>(&'a self, output: &mut W) {
-        match dot::render(self, output) {
-            Ok(_) => {},
-            Err(e) => panic!("error rendering graph: {}", e)
+    if let Some(m) = m.subcommand_matches("dot") {
+        let cfg = Config::from_matches(m).unwrap_or_else(|e| e.exit());
+        if let Err(e) = execute(cfg) {
+            e.exit();
         }
     }
 }
 
-impl<'a> dot::Labeller<'a, Nd, Ed> for Graph<'a> {
-    fn graph_id(&self) -> dot::Id<'a> {
-        dot::Id::new(self.nodes[0].name()).unwrap_or(dot::Id::new("dependencies").unwrap())
+fn execute(cfg: Config) -> CliResult<()> {
+    let project = cli_try!(Project::from_config(&cfg));
+    let graph = cli_try!(project.graph());
+
+    match cfg.dot_file {
+        None       => cli_try!(graph.render_to(&mut io::stdout())),
+        Some(file) => cli_try!(graph.render_to(&mut File::create(&Path::new(&file)).unwrap()))
     }
-    fn node_id(&self, n: &Nd) -> dot::Id {
-        // unwrap is safe because N######## is a valid graphviz id
-        dot::Id::new(format!("N{}", *n)).unwrap()
-    }
-    fn node_label(&'a self, i: &Nd) -> dot::LabelText<'a> {
-        if !self.source_labels {
-            dot::LabelText::LabelStr(self.nodes[*i].name().into())
-        } else {
-            dot::LabelText::LabelStr(self.nodes[*i].source_id().url().to_string().into())
-        }
-    }
+
+    Ok(())
 }
 
-impl<'a> dot::GraphWalk<'a, Nd, Ed> for Graph<'a> {
-    fn nodes(&self) -> dot::Nodes<'a,Nd> {
-        (0..self.nodes.len()).collect()
+fn is_file(s: String) -> Result<(), String> {
+    let p = Path::new(&*s);
+    if let None = p.file_name() {
+        return Err(format!("'{}' doesn't appear to be a valid file name", &*s))
     }
-    fn edges(&self) -> dot::Edges<Ed> {
-        Cow::Borrowed(&self.edges[..])
-    }
-    fn source(&self, &(s, _): &Ed) -> Nd { s }
-    fn target(&self, &(_, t): &Ed) -> Nd { t }
+    Ok(())
 }
