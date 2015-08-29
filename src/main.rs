@@ -27,7 +27,7 @@ mod dep;
 mod config;
 
 static LINE_STYLES: [&'static str; 3] = ["solid", "dotted", "dashed"];
-static COLORS: [&'static str; 7] = ["blue", "black", "yellow", "purple", "green", "red", "white"];
+static COLORS: [&'static str; 8] = ["blue", "black", "yellow", "purple", "green", "red", "white", "orange"];
 static DEP_SHAPES: [&'static str; 2] = ["box", "round"];
 
 fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
@@ -42,7 +42,8 @@ fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
         // We use a subcommand because everything parsed after `cargo` is sent to the third party 
         // plugin which will then be interpreted as a subcommand/positional arg by clap
         .subcommand(SubCommand::with_name("dot")
-            .author("Max New")
+            .author("Max New <maxsnew@gmail.com>\n\
+                     Kevin K. <kbknapp@gmail.com>")
             .about("Generate a graph of package dependencies in graphviz format")
             // Here we list the valid arguments. There are less verbose was to do this with clap
             // using "usage strings"; but because we want to set some additional properties not

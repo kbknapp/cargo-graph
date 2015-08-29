@@ -1,7 +1,10 @@
 [package]
 name = "cargo-dot"
 version = "0.1.0"
-authors = ["Max New <maxsnew@gmail.com>"]
+authors = [
+    "Max New <maxsnew@gmail.com>",
+    "Kevin K. <kbknapp@gmail.com>"
+]
 
 [[bin]]
 name = "cargo-dot"
