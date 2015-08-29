@@ -54,7 +54,8 @@ arg_enum!{
         Yellow,
         White,
         Black,
-        Purple
+        Purple,
+        Orange
     }
 }
 
@@ -68,6 +69,7 @@ impl DotColor {
             DotColor::White  => write!(f, ",color=white"),
             DotColor::Black  => Ok(()),
             DotColor::Purple => write!(f, ",color=purple"),
+            DotColor::Orange => write!(f, ",color=orange"),
         }
     }
 }
