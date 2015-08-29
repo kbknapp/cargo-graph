@@ -2,7 +2,7 @@ use std::io::{self, Write, Result};
 
 use config::Config;
 
-#[derive(PartialEq, Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DepKind {
     Build,
     Dev,

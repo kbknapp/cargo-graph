@@ -8,7 +8,7 @@ extern crate toml;
 extern crate clap;
 
 use std::fs::File;
-use std::io;
+use std::io::{self, BufWriter};
 use std::path::Path;
 
 use clap::{App, AppSettings, Arg, SubCommand, ArgMatches};
@@ -179,6 +179,7 @@ fn main() {
 
     if let Some(m) = m.subcommand_matches("dot") {
         let cfg = Config::from_matches(m).unwrap_or_else(|e| e.exit());
+        debugln!("cfg={:#?}", cfg);
         if let Err(e) = execute(cfg) {
             e.exit();
         }
@@ -190,11 +191,17 @@ fn execute(cfg: Config) -> CliResult<()> {
     let graph = cli_try!(project.graph());
 
     match cfg.dot_file {
-        None       => cli_try!(graph.render_to(&mut io::stdout())),
-        Some(file) => cli_try!(graph.render_to(&mut File::create(&Path::new(&file)).unwrap()))
+        None       => {
+            let o = io::stdout();
+            let mut bw = BufWriter::new(o.lock());
+            graph.render_to(&mut bw)
+        },
+        Some(file) => {
+            let o = File::create(&Path::new(&file)).ok().expect("Failed to create file");
+            let mut bw = BufWriter::new(o);
+            graph.render_to(&mut bw)
+        }
     }
-
-    Ok(())
 }
 
 fn is_file(s: String) -> Result<(), String> {

@@ -91,14 +91,17 @@ impl DotShape {
 
 #[derive(Debug, Copy, Clone)]
 pub struct DepStyle(DotShape, DotColor);
+
 impl fmt::Display for DepStyle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         try!(self.0.write(f));
         self.1.write(f)
     }
 }
+
 #[derive(Debug, Copy, Clone)]
 pub struct LineStyle(DotLineShape, DotColor);
+
 impl fmt::Display for LineStyle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         try!(self.0.write(f));
