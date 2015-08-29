@@ -28,7 +28,7 @@ mod config;
 
 static LINE_STYLES: [&'static str; 3] = ["solid", "dotted", "dashed"];
 static COLORS: [&'static str; 8] = ["blue", "black", "yellow", "purple", "green", "red", "white", "orange"];
-static DEP_SHAPES: [&'static str; 2] = ["box", "round"];
+static DEP_SHAPES: [&'static str; 4] = ["box", "round", "diamond", "triangle"];
 
 fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
     App::new("cargo-dot")

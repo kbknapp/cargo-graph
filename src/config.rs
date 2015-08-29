@@ -78,15 +78,19 @@ arg_enum!{
     #[derive(Debug, Copy, Clone)]
     pub enum DotShape {
         Box,
-        Round
+        Round,
+        Diamond,
+        Triangle
     }
 }
 
 impl DotShape {
     fn write(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            DotShape::Round => Ok(()),
-            DotShape::Box   => write!(f, ",shape=box")
+            DotShape::Round    => Ok(()),
+            DotShape::Box      => write!(f, ",shape=box"),
+            DotShape::Diamond  => write!(f, ",shape=diamond"),
+            DotShape::Triangle => write!(f, ",shape=triangle")
         }
     }
 }
