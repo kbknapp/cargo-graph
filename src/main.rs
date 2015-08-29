@@ -7,9 +7,8 @@ extern crate toml;
 #[macro_use]
 extern crate clap;
 
-use std::ascii::AsciiExt;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io;
 use std::path::Path;
 
 use clap::{App, AppSettings, Arg, SubCommand, ArgMatches};
@@ -27,16 +26,9 @@ mod project;
 mod dep;
 mod config;
 
-arg_enum! {
-    #[derive(Debug, Copy, Clone)]
-    pub enum LineStyle {
-        Solid,
-        Dotted,
-        Dashed
-    }
-}
-
 static LINE_STYLES: [&'static str; 3] = ["solid", "dotted", "dashed"];
+static COLORS: [&'static str; 7] = ["blue", "black", "yellow", "purple", "green", "red", "white"];
+static DEP_SHAPES: [&'static str; 2] = ["box", "round"];
 
 fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
     App::new("cargo-dot")
@@ -104,24 +96,81 @@ fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
                     .long("--optional-deps")
                     .takes_value(true)
                     .value_name("true|false"),
-                Arg::with_name("dev-style")
-                    .help("Line style for dev deps (Defaults to \'solid\'){n}")
-                    .long("dev-line-style")
+                // REGULAR "BUILD" DEP STYLE OPTIONS
+                Arg::with_name("build-line-style")
+                    .help("Line style for build deps (Defaults to \'solid\'){n}")
+                    .long("build-line-style")
                     .takes_value(true)
                     .value_name("STYLE")
                     .possible_values(&LINE_STYLES),
-                Arg::with_name("optional-style")
+                Arg::with_name("build-line-color")
+                    .help("Line color for regular deps (Defaults to \'black\'){n}")
+                    .long("build-line-color")
+                    .takes_value(true)
+                    .value_name("COLOR")
+                    .possible_values(&COLORS),
+                Arg::with_name("build-shape")
+                    .help("Shape for regular deps (Defaults to \'round\'){n}")
+                    .long("build-shape")
+                    .takes_value(true)
+                    .value_name("SHAPE")
+                    .possible_values(&DEP_SHAPES),
+                Arg::with_name("build-color")
+                    .help("Color for regular deps (Defaults to \'black\'){n}")
+                    .long("build-color")
+                    .takes_value(true)
+                    .value_name("COLOR")
+                    .possible_values(&COLORS),
+                // OPTIONAL DEP STYLE OPTIONS
+                Arg::with_name("optional-line-style")
                     .help("Line style for optional deps (Defaults to \'solid\'){n}")
                     .long("optional-line-style")
                     .takes_value(true)
                     .value_name("STYLE")
                     .possible_values(&LINE_STYLES),
-                Arg::with_name("build-style")
-                    .help("Line style for build deps (Defaults to \'solid\'){n}")
-                    .long("build-line-style")
+                Arg::with_name("optional-line-color")
+                    .help("Line color for optional deps (Defaults to \'black\'){n}")
+                    .long("optional-line-color")
+                    .takes_value(true)
+                    .value_name("COLOR")
+                    .possible_values(&COLORS),
+                Arg::with_name("optional-shape")
+                    .help("Shape for optional deps (Defaults to \'round\'){n}")
+                    .long("optional-shape")
+                    .takes_value(true)
+                    .value_name("SHAPE")
+                    .possible_values(&DEP_SHAPES),
+                Arg::with_name("optional-color")
+                    .help("Color for optional deps (Defaults to \'black\'){n}")
+                    .long("optional-color")
+                    .takes_value(true)
+                    .value_name("COLOR")
+                    .possible_values(&COLORS),
+                // DEV DEP STYLE OPTIONS
+                Arg::with_name("dev-line-style")
+                    .help("Line style for dev deps (Defaults to \'solid\'){n}")
+                    .long("dev-line-style")
                     .takes_value(true)
                     .value_name("STYLE")
-                    .possible_values(&LINE_STYLES)]))
+                    .possible_values(&LINE_STYLES),
+                Arg::with_name("dev-line-color")
+                    .help("Line color for dev deps (Defaults to \'black\'){n}")
+                    .long("dev-line-color")
+                    .takes_value(true)
+                    .value_name("COLOR")
+                    .possible_values(&COLORS),
+                Arg::with_name("dev-shape")
+                    .help("Shape for dev deps (Defaults to \'round\'){n}")
+                    .long("dev-shape")
+                    .takes_value(true)
+                    .value_name("SHAPE")
+                    .possible_values(&DEP_SHAPES),
+                Arg::with_name("dev-color")
+                    .help("Color for dev deps (Defaults to \'black\'){n}")
+                    .long("dev-color")
+                    .takes_value(true)
+                    .value_name("COLOR")
+                    .possible_values(&COLORS)]))
         .get_matches()
 }
 

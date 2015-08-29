@@ -11,13 +11,13 @@ use graph::DepGraph;
 use error::{CliError, CliResult};
 use config::Config;
 
-pub struct Project<'c> {
+pub struct Project<'c, 'o> where 'o: 'c {
     pwd: PathBuf,
-    cfg: &'c Config<'c>,
+    cfg: &'c Config<'o>,
 }
 
-impl<'c> Project<'c> {
-    pub fn from_config(cfg: &'c Config) -> CliResult<Self> {
+impl<'c, 'o> Project<'c, 'o> {
+    pub fn from_config(cfg: &'c Config<'o>) -> CliResult<Self> {
         let pwd = if let Ok(pwd) = env::current_dir() {
             pwd
         } else {
@@ -90,13 +90,13 @@ impl<'c> Project<'c> {
         Err(CliError::Generic(error_str))
     }
 
-    pub fn graph(mut self) -> CliResult<DepGraph> {
+    pub fn graph(mut self) -> CliResult<DepGraph<'c, 'o>> {
         let dg = cli_try!(self.parse_root_deps());
 
         self.parse_lock_file(dg)
     }
 
-    fn parse_lock_file(&self, mut dg: DepGraph) -> CliResult<DepGraph> {
+    fn parse_lock_file(&self, mut dg: DepGraph<'c, 'o>) -> CliResult<DepGraph<'c, 'o>> {
         let lock_path = cli_try!(self.find_project_file(self.cfg.lock_file));
         let lock_toml = cli_try!(Project::toml_from_file(lock_path));
 
@@ -122,7 +122,7 @@ impl<'c> Project<'c> {
         Ok(dg)
     }
 
-    pub fn parse_root_deps(&mut self) -> CliResult<DepGraph> {
+    pub fn parse_root_deps(&mut self) -> CliResult<DepGraph<'c, 'o>> {
         debugln!("executing; parse_root_deps;");
         let manifest_path = cli_try!(self.find_project_file(self.cfg.manifest_file));
         let manifest_toml = cli_try!(Project::toml_from_file(manifest_path));

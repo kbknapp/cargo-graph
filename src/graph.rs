@@ -2,7 +2,6 @@ use std::io::Write;
 
 // use dot;
 
-use LineStyle;
 use config::Config;
 use dep::{Dep, DepKind};
 use error::{CliError, CliResult};
@@ -10,22 +9,18 @@ use error::{CliError, CliResult};
 pub type Nd = usize;
 pub type Ed = (usize, usize);
 #[derive(Debug)]
-pub struct DepGraph {
+pub struct DepGraph<'c, 'o> where 'o: 'c {
     nodes: Vec<Dep>,
     pub edges: Vec<Ed>,
-    dev_style: LineStyle,
-    build_style: LineStyle,
-    optional_style: LineStyle
+    cfg: &'c Config<'o>
 }
 
-impl DepGraph {
-    pub fn with_root(root: Dep, cfg: &Config) -> Self {
+impl<'c, 'o> DepGraph<'c, 'o> {
+    pub fn with_root(root: Dep, cfg: &'c Config<'o>) -> Self {
         DepGraph { 
             nodes: vec![root],
-            edges: vec![] ,
-            dev_style: cfg.dev_lines,
-            build_style: cfg.build_lines,
-            optional_style: cfg.optional_lines
+            edges: vec![],
+            cfg: cfg
         }
     }
 
@@ -48,7 +43,8 @@ impl DepGraph {
     pub fn render_to<W:Write>(self, output: &mut W) -> CliResult<()> {
         cli_try!(writeln!(output, "{}", "digraph dependencies {"));
         for (i, dep) in self.nodes.iter().enumerate() {
-            cli_try!(writeln!(output, "\tN{}[label={:?}];",i, dep.name));
+            cli_try!(write!(output, "\tN{}",i));
+            cli_try!(dep.label(output, self.cfg));
         }
         for (il, ir) in self.edges.into_iter() {
             cli_try!(writeln!(output, "\tN{} -> N{}[label=\"\"];",il, ir));
