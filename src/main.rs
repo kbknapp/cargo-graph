@@ -1,8 +1,3 @@
-//! # cargo-graph
-//!
-//! Linux: [![Build
-//! Status](https://travis-ci.org/kbknapp/cargo-graph.svg?branch=master)](https:
-//! //travis-ci.org/kbknapp/cargo-graph)
 //!
 //! A `cargo` subcommand for building GraphViz DOT files of dependency graphs.
 //! This subcommand was originally based off and inspired by the project
@@ -109,7 +104,7 @@
 //! command line as an administrator and running
 //!
 //! ```ignore
-//! C:\> setx path "%path%;C:\path\to\cargo-graph\binary"
+//! C\:> setx path \"%path%;C:\path\to\cargo-graph\binary\"
 //! ```
 //!
 //! Otherwise, ensure you have the `cargo-graph` binary in the directory which
