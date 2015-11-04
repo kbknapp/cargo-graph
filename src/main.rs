@@ -122,11 +122,11 @@
 //! ```ignore
 //! USAGE:
 //!     cargo graph [FLAGS] [OPTIONS]
-//! 
+//!
 //! FLAGS:
 //!     -h, --help       Prints help information
 //!     -V, --version    Prints version information
-//! 
+//!
 //! OPTIONS:
 //!         --build-color <COLOR>            Color for regular deps (Defaults to 'black')
 //!                                           [values: blue black yellow purple green red white orange]
@@ -337,9 +337,10 @@ fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
 }
 
 fn main() {
+    debugln!("parsing cli...");
     let m = parse_cli();
 
-    if let Some(m) = m.subcommand_matches("dot") {
+    if let Some(m) = m.subcommand_matches("graph") {
         let cfg = Config::from_matches(m).unwrap_or_else(|e| e.exit());
         debugln!("cfg={:#?}", cfg);
         if let Err(e) = execute(cfg) {

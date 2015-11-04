@@ -18,9 +18,47 @@ $ dot -Tpng > rainbow-graph.png cargo-count.dot
 
 **NOTE:** It's also possible to run `cargo graph [options] | dot [options] > [file]` instead of individual commands
 
-The above commands would produce the following graph:
+The first command produces a GraphViz DOT file which looks like this:
 
-![cargo-graph dependencies](rainbow-graph.png)
+```
+digraph dependencies {
+  N0[label="cargo-count",shape=diamond,color=green];
+  N1[label="ansi_term",shape=box];
+  N2[label="clap",shape=diamond,color=green];
+  N3[label="clippy",shape=box];
+  N4[label="glob",shape=diamond,color=green];
+  N5[label="regex",shape=diamond,color=green];
+  N6[label="tabwriter",shape=diamond,color=green];
+  N7[label="aho-corasick",shape=diamond,color=green];
+  N8[label="memchr",shape=diamond,color=green];
+  N9[label="bitflags",shape=diamond,color=green];
+  N10[label="strsim",shape=diamond,color=green];
+  N11[label="unicode-normalization",shape=diamond,color=green];
+  N12[label="libc",shape=diamond,color=green];
+  N13[label="regex-syntax",shape=diamond,color=green];
+  N14[label="unicode-width",shape=diamond,color=green];
+  N0 -> N1[label="",style=dashed,color=red];
+  N0 -> N2[label="",color=orange];
+  N0 -> N3[label="",style=dashed,color=red];
+  N0 -> N4[label="",color=orange];
+  N0 -> N5[label="",color=orange];
+  N0 -> N6[label="",color=orange];
+  N7 -> N8[label="",color=orange];
+  N2 -> N1[label="",style=dashed,color=red];
+  N2 -> N9[label="",color=orange];
+  N2 -> N10[label="",color=orange];
+  N3 -> N11[label="",color=orange];
+  N8 -> N12[label="",color=orange];
+  N5 -> N7[label="",color=orange];
+  N5 -> N8[label="",color=orange];
+  N5 -> N13[label="",color=orange];
+  N6 -> N14[label="",color=orange];
+}
+```
+
+The second command produces a PNG image of the graph which looks like:
+
+![cargo-count dependencies](rainbow-graph.png)
 
 Now, *why* someone would do that to a graph is a different story...but it's possible :)
 
