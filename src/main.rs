@@ -21,7 +21,7 @@
 //! **NOTE:** GraphViz `dot` needs to be installed to produce the .PNG from the
 //! dotfile
 //!
-//! ```
+//! ```ignore
 //! $ cargo graph --optional-line-style dashed --optional-line-color red
 //! --optional-shape box --build-shape diamond --build-color green
 //! --build-line-color orange > cargo-count.dot
@@ -42,7 +42,7 @@
 //!
 //! `cargo-graph` can be installed with `cargo install`
 //!
-//! ```
+//! ```ignore
 //! $ cargo install cargo-graph
 //! ```
 //!
@@ -96,7 +96,7 @@
 //! `.bashrc` to whatever your shell startup file is (usually `.bashrc`,
 //! `.bash_profile`, or `.zshrc`)
 //!
-//! ```sh
+//! ```ignore
 //! $ mkdir ~/bin
 //! $ echo "export PATH=$PATH:$HOME/bin" >> ~/.bashrc
 //! $ cp cargo-graph~/bin
@@ -108,7 +108,7 @@
 //! On Windows 7/8 you can add directory to the `PATH` variable by opening a
 //! command line as an administrator and running
 //!
-//! ```sh
+//! ```ignore
 //! C:\> setx path "%path%;C:\path\to\cargo-graph\binary"
 //! ```
 //!
@@ -124,48 +124,48 @@
 //! There are a few options for using `cargo-graph` which should be somewhat
 //! self explanitory.
 //!
-//! ```
+//! ```ignore
 //! USAGE:
-//!     cargo [FLAGS] [OPTIONS] [--] [ARGS]
-//!
+//!     cargo graph [FLAGS] [OPTIONS]
+//! 
 //! FLAGS:
-//! -S, --follow-symlinks      Follows symlinks and counts source files it
-//! finds
-//!                                (Defaults to false when omitted)
-//!     -h, --help                 Prints help information
-//! --unsafe-statistics    Displays lines and percentages of "unsafe"
-//! code
-//!     -V, --version              Prints version information
-//!     -v, --verbose              Print verbose output
-//!
+//!     -h, --help       Prints help information
+//!     -V, --version    Prints version information
+//! 
 //! OPTIONS:
-//! -l, --language <exts>...    Only count these languges (by source code
-//! extension)
-//!                                 (i.e. '-l js py cpp')
-//! -e, --exclude <paths>...    Files or directories to exclude
-//! (automatically includes '.git')
-//! --utf8-rule <rule>      Sets the UTF-8 parsing rule (Defaults to
-//! 'strict')
-//!                                  [values: ignore lossy strict]
-//! -s, --separator <sep>       Set the thousands separator for pretty
-//! printing
-//!
-//! ARGS:
-//!     to_count...    The files or directories (including children) to count
-//!                    (defaults to current working directory when omitted)
-//!
-//! When using '--exclude <path>' the path given can either be relative to the
-//! current
-//! directory, or absolute. When '<path>' is a file, it must be relative to the
-//! current
-//! directory or it will not be found. Example, if the current directory has a
-//! child
-//! directory named 'target' with a child fild 'test.rs' and you use `--exclude
-//! target/test.rs'
-//!
-//! Globs are also supported. For example, to eclude 'test.rs' files from all
-//! child directories
-//! of the current directory you could do '--exclude */test.rs'.
+//!         --build-color <COLOR>            Color for regular deps (Defaults to 'black')
+//!                                           [values: blue black yellow purple green red white orange]
+//!         --build-deps <true|false>        Should build deps be in the graph? (Defaults to 'true')
+//!                                          ex. --build-deps=false OR --build-deps=no
+//!         --build-line-color <COLOR>       Line color for regular deps (Defaults to 'black')
+//!                                           [values: blue black yellow purple green red white orange]
+//!         --build-line-style <STYLE>       Line style for build deps (Defaults to 'solid')
+//!                                           [values: solid dotted dashed]
+//!         --build-shape <SHAPE>            Shape for regular deps (Defaults to 'round')
+//!                                           [values: box round diamond triangle]
+//!         --dev-color <COLOR>              Color for dev deps (Defaults to 'black')
+//!                                           [values: blue black yellow purple green red white orange]
+//!         --dev-deps <true|false>          Should dev deps be included in the graph? (Defaults to 'false')
+//!                                          ex. --dev-deps=true OR --dev-deps=yes
+//!         --dev-line-color <COLOR>         Line color for dev deps (Defaults to 'black')
+//!                                           [values: blue black yellow purple green red white orange]
+//!         --dev-line-style <STYLE>         Line style for dev deps (Defaults to 'solid')
+//!                                           [values: solid dotted dashed]
+//!         --dev-shape <SHAPE>              Shape for dev deps (Defaults to 'round')
+//!                                           [values: box round diamond triangle]
+//!         --dot-file <FILE>                Output file (Default to stdout)
+//!         --lock-file <FILE>               Specify location of .lock file (Default 'Cargo.lock')
+//!         --manifest-file <FILE>           Specify location of manifest file (Default 'Cargo.toml')
+//!         --optional-color <COLOR>         Color for optional deps (Defaults to 'black')
+//!                                           [values: blue black yellow purple green red white orange]
+//!         --optional-deps <true|false>     Should opitonal deps be in the graph? (Defaults to 'true')
+//!                                          ex. --optional-deps=false OR --optional-deps=no
+//!         --optional-line-color <COLOR>    Line color for optional deps (Defaults to 'black')
+//!                                           [values: blue black yellow purple green red white orange]
+//!         --optional-line-style <STYLE>    Line style for optional deps (Defaults to 'solid')
+//!                                           [values: solid dotted dashed]
+//!         --optional-shape <SHAPE>         Shape for optional deps (Defaults to 'round')
+//!                                           [values: box round diamond triangle]
 //! ```
 //!
 //! ## License
@@ -220,13 +220,12 @@ static COLORS: [&'static str; 8] = ["blue", "black", "yellow", "purple", "green"
 static DEP_SHAPES: [&'static str; 4] = ["box", "round", "diamond", "triangle"];
 
 fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
-    App::new("cargo-dot")
+    App::new("cargo-graph")
         .version(&*format!("v{}", crate_version!()))
         .bin_name("cargo")
         .settings(&[AppSettings::GlobalVersion, AppSettings::SubcommandRequired])
-        .subcommand(SubCommand::with_name("dot")
-                        .author("Max New <maxsnew@gmail.com>\n\
-                     Kevin K. <kbknapp@gmail.com>")
+        .subcommand(SubCommand::with_name("graph")
+                        .author("Kevin K. <kbknapp@gamil.com>\nMax New <maxsnew@gmail.com>")
                         .about("Generate a graph of package dependencies in graphviz format")
                         .args(vec![
                 Arg::with_name("lock-file")
