@@ -14,7 +14,7 @@ pub enum CliError {
     UnknownBoolArg,
     TomlTableRoot,
     CurrentDir,
-    Unknown
+    Unknown,
 }
 
 // Copies clog::error::Error;
@@ -49,25 +49,25 @@ impl Display for CliError {
 }
 
 impl Error for CliError {
-    fn description<'a>(&'a self) -> &'a str {
+    fn description(&self) -> &str {
         match *self {
             CliError::Generic(ref d) => &*d,
             CliError::FileOpen(ref d) => &*d,
-            CliError::TomlTableRoot  => "No root table found for toml file",
-            CliError::CurrentDir     => "Unable to determine the current working directory",
+            CliError::TomlTableRoot => "No root table found for toml file",
+            CliError::CurrentDir => "Unable to determine the current working directory",
             CliError::UnknownBoolArg => "The value supplied isn't valid, either use 'true/false', 'yes/no', or the first letter of either.",
-            CliError::Unknown        => "An unknown fatal error has occurred, please consider filing a bug-report!"
+            CliError::Unknown => "An unknown fatal error has occurred, please consider filing a bug-report!",
         }
     }
 
     fn cause(&self) -> Option<&Error> {
         match *self {
-            CliError::Generic(..)    => None,
-            CliError::FileOpen(..)   => None,
+            CliError::Generic(..) => None,
+            CliError::FileOpen(..) => None,
             CliError::UnknownBoolArg => None,
-            CliError::TomlTableRoot  => None,
-            CliError::CurrentDir     => None,
-            CliError::Unknown        => None,
+            CliError::TomlTableRoot => None,
+            CliError::CurrentDir => None,
+            CliError::Unknown => None,
         }
     }
 }

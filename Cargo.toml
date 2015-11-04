@@ -1,23 +1,31 @@
 [package]
-name = "cargo-dot"
-version = "0.1.0"
+name = "cargo-graph"
+version = "0.1.1"
 authors = [
-    "Max New <maxsnew@gmail.com>",
-    "Kevin K. <kbknapp@gmail.com>"
+    "Kevin K. <kbknapp@gmail.com>",
+    "Max New <maxsnew@gmail.com>"
 ]
+exclude = ["*.png"]
+description = "Cargo subcommand for building GraphViz DOT files of dependency graphs"
+repository = "https://github.com/kbknapp/cargo-graph.git"
+readme = "README.md"
+license = "MIT"
+keywords = ["cargo", "subcommand", "graph", "dot", "graphviz"]
 
 [[bin]]
-name = "cargo-dot"
+name = "cargo-graph"
 test = false
 doc = true
 
 [dependencies]
 toml = "~0.1.22"
-clap = "~1.2.5"
+clap = "~1.4"
+clippy = {version = "~0.0", optional = true}
 
 [features]
 default = []
-unstable = []
+unstable = ["lints"]
+lints = ["nightly", "clippy"]
 nightly = []
 debug = []
 

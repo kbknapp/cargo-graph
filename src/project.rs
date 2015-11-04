@@ -4,14 +4,16 @@ use std::error::Error;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 
-use toml::{self, Value, Table};
+use toml::{self, Table, Value};
 
 use dep::{Dep, DepKind};
 use graph::DepGraph;
 use error::{CliError, CliResult};
 use config::Config;
 
-pub struct Project<'c, 'o> where 'o: 'c {
+pub struct Project<'c, 'o>
+    where 'o: 'c
+{
     pwd: PathBuf,
     cfg: &'c Config<'o>,
 }
@@ -25,7 +27,7 @@ impl<'c, 'o> Project<'c, 'o> {
         };
 
 
-        Ok(Project{
+        Ok(Project {
             pwd: pwd,
             cfg: cfg,
         })
@@ -37,9 +39,9 @@ impl<'c, 'o> Project<'c, 'o> {
 
         loop {
             let manifest = pwd.join(file);
-            if let Ok(metadata) =  fs::metadata(&manifest) {
+            if let Ok(metadata) = fs::metadata(&manifest) {
                 if metadata.is_file() {
-                    return Ok(manifest)
+                    return Ok(manifest);
                 }
             }
 
@@ -57,12 +59,12 @@ impl<'c, 'o> Project<'c, 'o> {
         debugln!("executing; from_file; file={:?}", p.as_ref());
         let mut f = match File::open(p.as_ref()) {
             Ok(f) => f,
-            Err(e) => return Err(CliError::FileOpen(e.description().to_owned()))
+            Err(e) => return Err(CliError::FileOpen(e.description().to_owned())),
         };
 
         let mut s = String::new();
         if let Err(e) = f.read_to_string(&mut s) {
-            return Err(CliError::Generic(format!("Couldn't read the contents of Cargo.lock with error: {}", e.description())))
+            return Err(CliError::Generic(format!("Couldn't read the contents of Cargo.lock with error: {}", e.description())));
         }
 
         let mut parser = toml::Parser::new(&s);
@@ -78,10 +80,10 @@ impl<'c, 'o> Project<'c, 'o> {
             let (hiline, hicol) = parser.to_linecol(error.hi);
             error_str.push_str(&format!("{:?}:{}:{}{} {}\n",
                                         f,
-                                        loline + 1, locol + 1,
+                                        loline + 1,
+                                        locol + 1,
                                         if loline != hiline || locol != hicol {
-                                            format!("-{}:{}", hiline + 1,
-                                                    hicol + 1)
+                                            format!("-{}:{}", hiline + 1, hicol + 1)
                                         } else {
                                             "".to_owned()
                                         },
@@ -110,7 +112,8 @@ impl<'c, 'o> Project<'c, 'o> {
 
                 if let Some(&Value::Array(ref deps)) = pkg.lookup("dependencies") {
                     for dep in deps {
-                        let dep_string = dep.as_str().unwrap_or("").split(" ").collect::<Vec<_>>()[0];
+                        let dep_string =
+                            dep.as_str().unwrap_or("").split(" ").collect::<Vec<_>>()[0];
 
                         dg.add_child(id, dep_string, None);
                     }
@@ -128,7 +131,7 @@ impl<'c, 'o> Project<'c, 'o> {
         let manifest_toml = cli_try!(Project::toml_from_file(manifest_path));
         let root_table = match manifest_toml.get("package") {
             Some(table) => table,
-            None        => return Err(CliError::TomlTableRoot)
+            None => return Err(CliError::TomlTableRoot),
         };
 
         let proj_name = root_table.lookup("name")
