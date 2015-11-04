@@ -1,4 +1,4 @@
-use std::io::{self, Write, Result};
+use std::io::{Write, Result};
 
 use config::Config;
 
@@ -30,7 +30,7 @@ impl Dep {
         }
     }
 
-    pub fn label<W:Write>(&self, w: &mut W, c: &Config) -> io::Result<()> {
+    pub fn label<W:Write>(&self, w: &mut W, c: &Config) -> Result<()> {
         match self.kind {
             DepKind::Build    => writeln!(w, "[label={:?}{}];", self.name, c.build_style),
             DepKind::Dev      => writeln!(w, "[label={:?}{}];", self.name, c.dev_style),
