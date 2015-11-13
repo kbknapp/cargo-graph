@@ -3,15 +3,10 @@ name = "cargo-graph"
 version = "0.1.1"
 dependencies = [
  "ansi_term 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "clap 1.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "clippy 0.0.22 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clap 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clippy 0.0.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "ansi_term"
-version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "ansi_term"
@@ -25,17 +20,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "clap"
-version = "1.4.7"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "ansi_term 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ansi_term 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "strsim 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vec_map 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "clippy"
-version = "0.0.22"
+version = "0.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "unicode-normalization 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -62,5 +58,10 @@ dependencies = [
 [[package]]
 name = "unicode-normalization"
 version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "vec_map"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
