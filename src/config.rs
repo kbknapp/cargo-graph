@@ -4,7 +4,7 @@ use std::fmt;
 
 use clap::ArgMatches;
 
-use error::{CliError, CliResult};
+use error::{CliErrorKind, CliResult};
 
 trait BoolArg {
     fn parse_arg(&self) -> CliResult<bool>;
@@ -21,7 +21,7 @@ impl<'a> BoolArg for &'a str {
             "false" |
             "n" |
             "f" => Ok(false),
-            _ => Err(CliError::UnknownBoolArg),
+            _ => Err(From::from(CliErrorKind::UnknownBoolArg)),
         }
     }
 }
@@ -138,9 +138,9 @@ impl<'a> Config<'a> {
             lock_file: m.value_of("lock-file").unwrap_or("Cargo.lock"),
             manifest_file: m.value_of("manifest-file").unwrap_or("Cargo.toml"),
             dot_file: m.value_of("dot-file"),
-            dev_deps: cli_try!(m.value_of("dev-deps").unwrap_or("false").parse_arg()),
-            build_deps: cli_try!(m.value_of("build-deps").unwrap_or("true").parse_arg()),
-            optional_deps: cli_try!(m.value_of("optional-deps").unwrap_or("true").parse_arg()),
+            dev_deps: try!(m.value_of("dev-deps").unwrap_or("false").parse_arg()),
+            build_deps: try!(m.value_of("build-deps").unwrap_or("true").parse_arg()),
+            optional_deps: try!(m.value_of("optional-deps").unwrap_or("true").parse_arg()),
             build_lines: LineStyle(value_t!(m.value_of("build-line-style"), DotLineShape)
                                        .unwrap_or(DotLineShape::Solid),
                                    value_t!(m.value_of("build-line-color"), DotColor)

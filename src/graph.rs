@@ -3,7 +3,7 @@ use std::io::{self, Write};
 
 use config::Config;
 use dep::{Dep, DepKind};
-use error::{CliError, CliResult};
+use error::CliResult;
 
 pub type Nd = usize;
 
@@ -62,6 +62,54 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         None
     }
 
+    pub fn update_style(&mut self, name: &str, kind: DepKind) {
+        if let Some(id) = self.find(name) {
+            if let Some(dep) = self.get_mut(id) {
+                dep.kind = kind;
+            }
+        }
+    }
+
+    pub fn remove(&mut self, name: &str) {
+        if let Some(id) = self.find(name) {
+            debugln!("Removing node: {} index {}", name, id);
+            self.nodes.remove(id);
+        }
+    }
+
+    pub fn remove_orphans(&mut self) {
+        let len = self.nodes.len();
+        loop {
+            let mut to_rem = None;
+            for (eid, &Ed(idl, idr)) in self.edges.iter().enumerate() {
+                if idl > len || idr > len {
+                    to_rem = Some(eid);
+                }
+            }
+            if let Some(id) = to_rem {
+                self.edges.remove(id);
+                continue;
+            }
+            break;
+        }
+    }
+
+    pub fn get_mut(&mut self, id: usize) -> Option<&mut Dep> {
+        if id < self.nodes.len() {
+            return Some(&mut self.nodes[id]);
+        }
+        None
+    }
+
+    pub fn find(&self, name: &str) -> Option<usize> {
+        for (i, d) in self.nodes.iter().enumerate() {
+            if d.name == name {
+                return Some(i);
+            }
+        }
+        None
+    }
+
     pub fn find_or_add(&mut self, new: &str, k: DepKind) -> usize {
         for (i, d) in self.nodes.iter().enumerate() {
             if d.name == new {
@@ -72,17 +120,19 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         self.nodes.len() - 1
     }
 
-    pub fn render_to<W: Write>(self, output: &mut W) -> CliResult<()> {
-        cli_try!(writeln!(output, "{}", "digraph dependencies {"));
+    pub fn render_to<W: Write>(mut self, output: &mut W) -> CliResult<()> {
+        self.remove_orphans();
+        try!(writeln!(output, "{}", "digraph dependencies {"));
         for (i, dep) in self.nodes.iter().enumerate() {
-            cli_try!(write!(output, "\tN{}", i));
-            cli_try!(dep.label(output, self.cfg));
+            try!(write!(output, "\tN{}", i));
+            try!(dep.label(output, self.cfg));
         }
         for ed in &self.edges {
-            cli_try!(write!(output, "\t{}", ed));
-            cli_try!(ed.label(output, &self));
+            try!(write!(output, "\t{}", ed));
+            try!(ed.label(output, &self));
         }
-        cli_try!(writeln!(output, "{}", "}"));
+        try!(writeln!(output, "{}", "}"));
         Ok(())
     }
+
 }

@@ -128,39 +128,68 @@
 //!     -V, --version    Prints version information
 //!
 //! OPTIONS:
-//!         --build-color <COLOR>            Color for regular deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --build-deps <true|false>        Should build deps be in the graph? (Defaults to 'true')
-//!                                          ex. --build-deps=false OR --build-deps=no
-//!         --build-line-color <COLOR>       Line color for regular deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --build-line-style <STYLE>       Line style for build deps (Defaults to 'solid')
+//! --build-color <COLOR>            Color for regular deps (Defaults
+//! to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --build-deps <true|false>        Should build deps be in the graph?
+//! (Defaults to 'true')
+//! ex. --build-deps=false OR
+//! --build-deps=no
+//! --build-line-color <COLOR>       Line color for regular deps
+//! (Defaults to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --build-line-style <STYLE>       Line style for build deps
+//! (Defaults to 'solid')
 //!                                           [values: solid dotted dashed]
-//!         --build-shape <SHAPE>            Shape for regular deps (Defaults to 'round')
-//!                                           [values: box round diamond triangle]
-//!         --dev-color <COLOR>              Color for dev deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --dev-deps <true|false>          Should dev deps be included in the graph? (Defaults to 'false')
-//!                                          ex. --dev-deps=true OR --dev-deps=yes
-//!         --dev-line-color <COLOR>         Line color for dev deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --dev-line-style <STYLE>         Line style for dev deps (Defaults to 'solid')
+//! --build-shape <SHAPE>            Shape for regular deps (Defaults
+//! to 'round')
+//! [values: box round diamond
+//! triangle]
+//! --dev-color <COLOR>              Color for dev deps (Defaults to
+//! 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --dev-deps <true|false>          Should dev deps be included in the
+//! graph? (Defaults to 'false')
+//! ex. --dev-deps=true OR
+//! --dev-deps=yes
+//! --dev-line-color <COLOR>         Line color for dev deps (Defaults
+//! to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --dev-line-style <STYLE>         Line style for dev deps (Defaults
+//! to 'solid')
 //!                                           [values: solid dotted dashed]
-//!         --dev-shape <SHAPE>              Shape for dev deps (Defaults to 'round')
-//!                                           [values: box round diamond triangle]
+//! --dev-shape <SHAPE>              Shape for dev deps (Defaults to
+//! 'round')
+//! [values: box round diamond
+//! triangle]
 //!         --dot-file <FILE>                Output file (Default to stdout)
-//!         --lock-file <FILE>               Specify location of .lock file (Default 'Cargo.lock')
-//!         --manifest-file <FILE>           Specify location of manifest file (Default 'Cargo.toml')
-//!         --optional-color <COLOR>         Color for optional deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --optional-deps <true|false>     Should opitonal deps be in the graph? (Defaults to 'true')
-//!                                          ex. --optional-deps=false OR --optional-deps=no
-//!         --optional-line-color <COLOR>    Line color for optional deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --optional-line-style <STYLE>    Line style for optional deps (Defaults to 'solid')
+//! --lock-file <FILE>               Specify location of .lock file
+//! (Default 'Cargo.lock')
+//! --manifest-file <FILE>           Specify location of manifest file
+//! (Default 'Cargo.toml')
+//! --optional-color <COLOR>         Color for optional deps (Defaults
+//! to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --optional-deps <true|false>     Should opitonal deps be in the
+//! graph? (Defaults to 'true')
+//! ex. --optional-deps=false OR
+//! --optional-deps=no
+//! --optional-line-color <COLOR>    Line color for optional deps
+//! (Defaults to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --optional-line-style <STYLE>    Line style for optional deps
+//! (Defaults to 'solid')
 //!                                           [values: solid dotted dashed]
-//!         --optional-shape <SHAPE>         Shape for optional deps (Defaults to 'round')
-//!                                           [values: box round diamond triangle]
+//! --optional-shape <SHAPE>         Shape for optional deps (Defaults
+//! to 'round')
+//! [values: box round diamond
+//! triangle]
 //! ```
 //!
 //! ## License
@@ -189,6 +218,8 @@
 extern crate toml;
 #[macro_use]
 extern crate clap;
+#[cfg(feature = "color")]
+extern crate ansi_term;
 
 use std::fs::File;
 use std::io::{self, BufWriter};
@@ -196,7 +227,7 @@ use std::path::Path;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 
-use error::{CliError, CliResult};
+use error::CliResult;
 use config::Config;
 use project::Project;
 
@@ -208,6 +239,7 @@ mod fmt;
 mod project;
 mod dep;
 mod config;
+mod util;
 
 static LINE_STYLES: [&'static str; 3] = ["solid", "dotted", "dashed"];
 static COLORS: [&'static str; 8] = ["blue", "black", "yellow", "purple", "green", "red", "white",
@@ -343,15 +375,13 @@ fn main() {
     if let Some(m) = m.subcommand_matches("graph") {
         let cfg = Config::from_matches(m).unwrap_or_else(|e| e.exit());
         debugln!("cfg={:#?}", cfg);
-        if let Err(e) = execute(cfg) {
-            e.exit();
-        }
+        execute(cfg).map_err(|e| e.exit()).unwrap();
     }
 }
 
 fn execute(cfg: Config) -> CliResult<()> {
-    let project = cli_try!(Project::from_config(&cfg));
-    let graph = cli_try!(project.graph());
+    let project = try!(Project::with_config(&cfg));
+    let graph = try!(project.graph());
 
     match cfg.dot_file {
         None => {
