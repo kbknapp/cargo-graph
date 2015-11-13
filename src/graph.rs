@@ -3,7 +3,7 @@ use std::io::{self, Write};
 
 use config::Config;
 use dep::{Dep, DepKind};
-use error::{CliError, CliResult};
+use error::CliResult;
 
 pub type Nd = usize;
 
@@ -73,16 +73,16 @@ impl<'c, 'o> DepGraph<'c, 'o> {
     }
 
     pub fn render_to<W: Write>(self, output: &mut W) -> CliResult<()> {
-        cli_try!(writeln!(output, "{}", "digraph dependencies {"));
+        try!(writeln!(output, "{}", "digraph dependencies {"));
         for (i, dep) in self.nodes.iter().enumerate() {
-            cli_try!(write!(output, "\tN{}", i));
-            cli_try!(dep.label(output, self.cfg));
+            try!(write!(output, "\tN{}", i));
+            try!(dep.label(output, self.cfg));
         }
         for ed in &self.edges {
-            cli_try!(write!(output, "\t{}", ed));
-            cli_try!(ed.label(output, &self));
+            try!(write!(output, "\t{}", ed));
+            try!(ed.label(output, &self));
         }
-        cli_try!(writeln!(output, "{}", "}"));
+        try!(writeln!(output, "{}", "}"));
         Ok(())
     }
 }

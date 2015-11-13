@@ -189,6 +189,8 @@
 extern crate toml;
 #[macro_use]
 extern crate clap;
+#[cfg(feature = "color")]
+extern crate ansi_term;
 
 use std::fs::File;
 use std::io::{self, BufWriter};
@@ -196,7 +198,7 @@ use std::path::Path;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 
-use error::{CliError, CliResult};
+use error::CliResult;
 use config::Config;
 use project::Project;
 
@@ -350,8 +352,8 @@ fn main() {
 }
 
 fn execute(cfg: Config) -> CliResult<()> {
-    let project = cli_try!(Project::from_config(&cfg));
-    let graph = cli_try!(project.graph());
+    let project = try!(Project::from_config(&cfg));
+    let graph = try!(project.graph());
 
     match cfg.dot_file {
         None => {

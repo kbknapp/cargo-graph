@@ -1,6 +1,5 @@
 use std::io::Read;
 use std::env;
-use std::error::Error;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 
@@ -8,7 +7,7 @@ use toml::{self, Table, Value};
 
 use dep::{Dep, DepKind};
 use graph::DepGraph;
-use error::{CliError, CliResult};
+use error::{CliErrorKind, CliResult};
 use config::Config;
 
 pub struct Project<'c, 'o>
@@ -20,19 +19,13 @@ pub struct Project<'c, 'o>
 
 impl<'c, 'o> Project<'c, 'o> {
     pub fn from_config(cfg: &'c Config<'o>) -> CliResult<Self> {
-        let pwd = if let Ok(pwd) = env::current_dir() {
-            pwd
-        } else {
-            return Err(CliError::CurrentDir);
-        };
-
+        let pwd = try!(env::current_dir());
 
         Ok(Project {
             pwd: pwd,
             cfg: cfg,
         })
     }
-
 
     fn find_project_file(&self, file: &str) -> CliResult<PathBuf> {
         let mut pwd = self.pwd.as_path();
@@ -51,21 +44,16 @@ impl<'c, 'o> Project<'c, 'o> {
             }
         }
 
-        Err(CliError::Generic(format!("Could not find `{}` in `{}` or any parent directory, or it isn't a valid lock-file",
-                          file, pwd.display())))
+        Err(From::from(CliErrorKind::Generic(format!("Could not find `{}` in `{}` or any parent directory, or it isn't a valid lock-file",
+                          file, pwd.display()))))
     }
 
     fn toml_from_file<P: AsRef<Path>>(p: P) -> CliResult<Box<Table>> {
         debugln!("executing; from_file; file={:?}", p.as_ref());
-        let mut f = match File::open(p.as_ref()) {
-            Ok(f) => f,
-            Err(e) => return Err(CliError::FileOpen(e.description().to_owned())),
-        };
+        let mut f = try!(File::open(p.as_ref()));
 
         let mut s = String::new();
-        if let Err(e) = f.read_to_string(&mut s) {
-            return Err(CliError::Generic(format!("Couldn't read the contents of Cargo.lock with error: {}", e.description())));
-        }
+        try!(f.read_to_string(&mut s));
 
         let mut parser = toml::Parser::new(&s);
         match parser.parse() {
@@ -89,18 +77,18 @@ impl<'c, 'o> Project<'c, 'o> {
                                         },
                                         error.desc));
         }
-        Err(CliError::Generic(error_str))
+        Err(From::from(CliErrorKind::Generic(error_str)))
     }
 
     pub fn graph(mut self) -> CliResult<DepGraph<'c, 'o>> {
-        let dg = cli_try!(self.parse_root_deps());
+        let dg = try!(self.parse_root_deps());
 
         self.parse_lock_file(dg)
     }
 
     fn parse_lock_file(&self, mut dg: DepGraph<'c, 'o>) -> CliResult<DepGraph<'c, 'o>> {
-        let lock_path = cli_try!(self.find_project_file(self.cfg.lock_file));
-        let lock_toml = cli_try!(Project::toml_from_file(lock_path));
+        let lock_path = try!(self.find_project_file(self.cfg.lock_file));
+        let lock_toml = try!(Project::toml_from_file(lock_path));
 
         if let Some(&Value::Array(ref packages)) = lock_toml.get("package") {
             for pkg in packages {
@@ -127,11 +115,11 @@ impl<'c, 'o> Project<'c, 'o> {
 
     pub fn parse_root_deps(&mut self) -> CliResult<DepGraph<'c, 'o>> {
         debugln!("executing; parse_root_deps;");
-        let manifest_path = cli_try!(self.find_project_file(self.cfg.manifest_file));
-        let manifest_toml = cli_try!(Project::toml_from_file(manifest_path));
+        let manifest_path = try!(self.find_project_file(self.cfg.manifest_file));
+        let manifest_toml = try!(Project::toml_from_file(manifest_path));
         let root_table = match manifest_toml.get("package") {
             Some(table) => table,
-            None => return Err(CliError::TomlTableRoot),
+            None => return Err(From::from(CliErrorKind::TomlTableRoot)),
         };
 
         let proj_name = root_table.lookup("name")

@@ -1,12 +1,3 @@
-macro_rules! cli_try {
-    ($t:expr) => ({
-        use ::std::error::Error;
-        match $t {
-            Ok(o) => o,
-            Err(e) => return Err(CliError::Generic(e.description().to_owned()))
-        }
-    })
-}
 macro_rules! wlnerr(
     ($($arg:tt)*) => ({
         use std::io::{Write, stderr};
