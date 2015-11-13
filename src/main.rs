@@ -375,7 +375,7 @@ fn main() {
     if let Some(m) = m.subcommand_matches("graph") {
         let cfg = Config::from_matches(m).unwrap_or_else(|e| e.exit());
         debugln!("cfg={:#?}", cfg);
-        execute(cfg).map_err(|e| e.exit() ).unwrap();
+        execute(cfg).map_err(|e| e.exit()).unwrap();
     }
 }
 

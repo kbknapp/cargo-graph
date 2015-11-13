@@ -34,7 +34,7 @@ pub struct Project<'c, 'o>
     cfg: &'c Config<'o>,
     styles: HashMap<String, DepKind>,
     dep_tree: HashMap<String, Vec<String>>,
-    blacklist: Vec<String>
+    blacklist: Vec<String>,
 }
 
 impl<'c, 'o> Project<'c, 'o> {
@@ -43,7 +43,7 @@ impl<'c, 'o> Project<'c, 'o> {
             cfg: cfg,
             styles: HashMap::new(),
             dep_tree: HashMap::new(),
-            blacklist: vec![]
+            blacklist: vec![],
         })
     }
 
@@ -63,8 +63,8 @@ impl<'c, 'o> Project<'c, 'o> {
         propagate_kind!(self, DepKind::Build);
         for (name, kind) in &self.styles {
             if (*kind == DepKind::Dev && !self.cfg.dev_deps) ||
-                (*kind == DepKind::Optional && !self.cfg.optional_deps) ||
-                (*kind == DepKind::Build && !self.cfg.build_deps) {
+               (*kind == DepKind::Optional && !self.cfg.optional_deps) ||
+               (*kind == DepKind::Build && !self.cfg.build_deps) {
                 dg.remove(&*name);
             } else {
                 dg.update_style(&*name, *kind);
@@ -84,10 +84,11 @@ impl<'c, 'o> Project<'c, 'o> {
                               .expect("no 'name' field in Cargo.lock [package] table")
                               .as_str()
                               .expect("'name' field of [package] table in Cargo.lock was not a \
-                                       valid string").to_owned();
+                                       valid string")
+                              .to_owned();
                 let kind = match self.styles.get(&name) {
                     Some(k) => k.clone(),
-                    None    => DepKind::Build
+                    None => DepKind::Build,
                 };
                 let id = dg.find_or_add(&*name, kind);
 
