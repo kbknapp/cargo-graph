@@ -15,7 +15,7 @@ pub enum CliErrorKind {
     CurrentDir,
     Unknown,
     Io(io::Error),
-    Generic(String)
+    Generic(String),
 }
 
 impl CliErrorKind {
@@ -26,7 +26,7 @@ impl CliErrorKind {
             CliErrorKind::CurrentDir => "Unable to determine the current working directory",
             CliErrorKind::UnknownBoolArg => "The value supplied isn't valid, either use 'true/false', 'yes/no', or the first letter of either.",
             CliErrorKind::Unknown => "An unknown fatal error has occurred, please consider filing a bug-report!",
-            CliErrorKind::Io(ref e)   => e.description()
+            CliErrorKind::Io(ref e) => e.description(),
         }
     }
 }
@@ -35,7 +35,7 @@ impl From<CliErrorKind> for CliError {
     fn from(kind: CliErrorKind) -> Self {
         CliError {
             error: format!("{} {}", Format::Error("error:"), kind.description()),
-            kind: kind
+            kind: kind,
         }
     }
 }
@@ -45,7 +45,7 @@ pub struct CliError {
     /// The formatted error message
     pub error: String,
     /// The type of error
-    pub kind: CliErrorKind
+    pub kind: CliErrorKind,
 }
 
 // Copies clog::error::Error;
@@ -89,7 +89,7 @@ impl Error for CliError {
             CliErrorKind::TomlTableRoot => None,
             CliErrorKind::CurrentDir => None,
             CliErrorKind::Unknown => None,
-            CliErrorKind::Io(ref e) => Some(e)
+            CliErrorKind::Io(ref e) => Some(e),
         }
     }
 }
@@ -98,7 +98,7 @@ impl From<io::Error> for CliError {
     fn from(ioe: io::Error) -> Self {
         CliError {
             error: format!("{} {}", Format::Error("error:"), ioe.description()),
-            kind: CliErrorKind::Io(ioe)
+            kind: CliErrorKind::Io(ioe),
         }
     }
 }

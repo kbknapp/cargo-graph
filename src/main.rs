@@ -128,39 +128,68 @@
 //!     -V, --version    Prints version information
 //!
 //! OPTIONS:
-//!         --build-color <COLOR>            Color for regular deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --build-deps <true|false>        Should build deps be in the graph? (Defaults to 'true')
-//!                                          ex. --build-deps=false OR --build-deps=no
-//!         --build-line-color <COLOR>       Line color for regular deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --build-line-style <STYLE>       Line style for build deps (Defaults to 'solid')
+//! --build-color <COLOR>            Color for regular deps (Defaults
+//! to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --build-deps <true|false>        Should build deps be in the graph?
+//! (Defaults to 'true')
+//! ex. --build-deps=false OR
+//! --build-deps=no
+//! --build-line-color <COLOR>       Line color for regular deps
+//! (Defaults to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --build-line-style <STYLE>       Line style for build deps
+//! (Defaults to 'solid')
 //!                                           [values: solid dotted dashed]
-//!         --build-shape <SHAPE>            Shape for regular deps (Defaults to 'round')
-//!                                           [values: box round diamond triangle]
-//!         --dev-color <COLOR>              Color for dev deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --dev-deps <true|false>          Should dev deps be included in the graph? (Defaults to 'false')
-//!                                          ex. --dev-deps=true OR --dev-deps=yes
-//!         --dev-line-color <COLOR>         Line color for dev deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --dev-line-style <STYLE>         Line style for dev deps (Defaults to 'solid')
+//! --build-shape <SHAPE>            Shape for regular deps (Defaults
+//! to 'round')
+//! [values: box round diamond
+//! triangle]
+//! --dev-color <COLOR>              Color for dev deps (Defaults to
+//! 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --dev-deps <true|false>          Should dev deps be included in the
+//! graph? (Defaults to 'false')
+//! ex. --dev-deps=true OR
+//! --dev-deps=yes
+//! --dev-line-color <COLOR>         Line color for dev deps (Defaults
+//! to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --dev-line-style <STYLE>         Line style for dev deps (Defaults
+//! to 'solid')
 //!                                           [values: solid dotted dashed]
-//!         --dev-shape <SHAPE>              Shape for dev deps (Defaults to 'round')
-//!                                           [values: box round diamond triangle]
+//! --dev-shape <SHAPE>              Shape for dev deps (Defaults to
+//! 'round')
+//! [values: box round diamond
+//! triangle]
 //!         --dot-file <FILE>                Output file (Default to stdout)
-//!         --lock-file <FILE>               Specify location of .lock file (Default 'Cargo.lock')
-//!         --manifest-file <FILE>           Specify location of manifest file (Default 'Cargo.toml')
-//!         --optional-color <COLOR>         Color for optional deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --optional-deps <true|false>     Should opitonal deps be in the graph? (Defaults to 'true')
-//!                                          ex. --optional-deps=false OR --optional-deps=no
-//!         --optional-line-color <COLOR>    Line color for optional deps (Defaults to 'black')
-//!                                           [values: blue black yellow purple green red white orange]
-//!         --optional-line-style <STYLE>    Line style for optional deps (Defaults to 'solid')
+//! --lock-file <FILE>               Specify location of .lock file
+//! (Default 'Cargo.lock')
+//! --manifest-file <FILE>           Specify location of manifest file
+//! (Default 'Cargo.toml')
+//! --optional-color <COLOR>         Color for optional deps (Defaults
+//! to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --optional-deps <true|false>     Should opitonal deps be in the
+//! graph? (Defaults to 'true')
+//! ex. --optional-deps=false OR
+//! --optional-deps=no
+//! --optional-line-color <COLOR>    Line color for optional deps
+//! (Defaults to 'black')
+//! [values: blue black yellow purple
+//! green red white orange]
+//! --optional-line-style <STYLE>    Line style for optional deps
+//! (Defaults to 'solid')
 //!                                           [values: solid dotted dashed]
-//!         --optional-shape <SHAPE>         Shape for optional deps (Defaults to 'round')
-//!                                           [values: box round diamond triangle]
+//! --optional-shape <SHAPE>         Shape for optional deps (Defaults
+//! to 'round')
+//! [values: box round diamond
+//! triangle]
 //! ```
 //!
 //! ## License

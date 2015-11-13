@@ -44,8 +44,11 @@ impl<'c, 'o> Project<'c, 'o> {
             }
         }
 
-        Err(From::from(CliErrorKind::Generic(format!("Could not find `{}` in `{}` or any parent directory, or it isn't a valid lock-file",
-                          file, pwd.display()))))
+        Err(From::from(CliErrorKind::Generic(format!("Could not find `{}` in `{}` or any \
+                                                      parent directory, or it isn't a valid \
+                                                      lock-file",
+                                                     file,
+                                                     pwd.display()))))
     }
 
     fn toml_from_file<P: AsRef<Path>>(p: P) -> CliResult<Box<Table>> {
@@ -95,7 +98,8 @@ impl<'c, 'o> Project<'c, 'o> {
                 let name = pkg.lookup("name")
                               .expect("no 'name' field in Cargo.lock [package] table")
                               .as_str()
-                              .expect("'name' field of [package] table in Cargo.lock was not a valid string");
+                              .expect("'name' field of [package] table in Cargo.lock was not a \
+                                       valid string");
                 let id = dg.find_or_add(name, DepKind::Build);
 
                 if let Some(&Value::Array(ref deps)) = pkg.lookup("dependencies") {
@@ -123,9 +127,12 @@ impl<'c, 'o> Project<'c, 'o> {
         };
 
         let proj_name = root_table.lookup("name")
-            .expect("no 'name' field in the project manifest file's [package] table")
-            .as_str()
-            .expect("'name' field in the project manifest file's [package] table isn't a valid string").to_owned();
+                                  .expect("no 'name' field in the project manifest file's \
+                                           [package] table")
+                                  .as_str()
+                                  .expect("'name' field in the project manifest file's [package] \
+                                           table isn't a valid string")
+                                  .to_owned();
 
         let root = Dep::new(proj_name);
         let root_id = 0;
