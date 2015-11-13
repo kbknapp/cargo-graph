@@ -1,3 +1,17 @@
+<a name="v0.1.2"></a>
+### v0.1.2 (2015-11-13)
+
+
+#### Bug Fixes
+
+* **Dev Deps:**  fixes a bug where dev deps are not properly filtered ([8661c2fc](https://github.com/kbknapp/cargo-graph/commit/8661c2fc21d66cae37a43baaa778498efeed8ec7), closes [#4](https://github.com/kbknapp/cargo-graph/issues/4))
+
+#### Improvements
+
+* **Errors:**  improves error handling ergonomics ([da0dde32](https://github.com/kbknapp/cargo-graph/commit/da0dde323cb9f5b84f928095bd64160ba3d9f5f7))
+
+
+
 <a name="v0.1.1"></a>
 ## v0.1.1 (2015-11-04)
 
