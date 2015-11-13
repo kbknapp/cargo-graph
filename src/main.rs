@@ -239,6 +239,7 @@ mod fmt;
 mod project;
 mod dep;
 mod config;
+mod util;
 
 static LINE_STYLES: [&'static str; 3] = ["solid", "dotted", "dashed"];
 static COLORS: [&'static str; 8] = ["blue", "black", "yellow", "purple", "green", "red", "white",
@@ -374,14 +375,12 @@ fn main() {
     if let Some(m) = m.subcommand_matches("graph") {
         let cfg = Config::from_matches(m).unwrap_or_else(|e| e.exit());
         debugln!("cfg={:#?}", cfg);
-        if let Err(e) = execute(cfg) {
-            e.exit();
-        }
+        execute(cfg).map_err(|e| e.exit() ).unwrap();
     }
 }
 
 fn execute(cfg: Config) -> CliResult<()> {
-    let project = try!(Project::from_config(&cfg));
+    let project = try!(Project::with_config(&cfg));
     let graph = try!(project.graph());
 
     match cfg.dot_file {
