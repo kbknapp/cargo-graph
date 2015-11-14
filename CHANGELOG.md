@@ -1,3 +1,18 @@
+<a name="v0.1.2"></a>
+## v0.1.2 (2015-11-14)
+
+
+#### Bug Fixes
+
+*   fixes building on windows due to upstream dep ([99eb7f9e](https://github.com/kbknapp/cargo-graph/commit/99eb7f9ed7c190243c31bc41b4f8c0400383530c))
+* **Dev Deps:**  fixes a bug where dev deps are not properly filtered ([8661c2fc](https://github.com/kbknapp/cargo-graph/commit/8661c2fc21d66cae37a43baaa778498efeed8ec7), closes [#4](https://github.com/kbknapp/cargo-graph/issues/4))
+
+#### Improvements
+
+* **Errors:**  improves error handling ergonomics ([da0dde32](https://github.com/kbknapp/cargo-graph/commit/da0dde323cb9f5b84f928095bd64160ba3d9f5f7))
+
+
+
 <a name="v0.1.1"></a>
 ## v0.1.1 (2015-11-04)
 
