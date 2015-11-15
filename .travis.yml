@@ -12,7 +12,6 @@ script:
   - |
     cargo build &&
     cargo test 
-#    travis-cargo --only stable doc
 addons:
   apt:
     packages:
@@ -21,7 +20,6 @@ addons:
     - libdw-dev
 after_success:
   - travis-cargo --only stable coveralls --no-sudo
-#   travis-cargo --only stable doc-upload &&
 env:
   global:
     secure: JLBlgHY6OEmhJ8woewNJHmuBokTNUv7/WvLkJGV8xk0t6bXBwSU0jNloXwlH7FiQTc4TccX0PumPDD4MrMgxIAVFPmmmlQOCmdpYP4tqZJ8xo189E5zk8lKF5OyaVYCs5SMmFC3cxCsKjfwGIexNu3ck5Uhwe9jI0tqgkgM3URA=

@@ -14,8 +14,6 @@ keywords = ["cargo", "subcommand", "graph", "dot", "graphviz"]
 
 [[bin]]
 name = "cargo-graph"
-test = false
-doc = true
 
 [dependencies]
 toml = "~0.1.22"
