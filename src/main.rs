@@ -10,7 +10,7 @@
 //! Let's say we wanted to build a dependency graph of
 //! [cargo-count](https://github.com/kbknapp/cargo-count) but we wanted
 //! optional dependencies to use red dashed lines and black boxes, and regular
-//! (aka "build") dependencies to use orange lines to green diamons, one would
+//! (aka "build") dependencies to use orange lines to green diamonds, one would
 //! run the following.
 //!
 //! **NOTE:** GraphViz `dot` needs to be installed to produce the .PNG from the
@@ -43,7 +43,7 @@
 //!
 //! This may require a nightly version of `cargo` if you get an error about the
 //! `install` command not being found. You may also compile and install the
-//! traditional way by followin the instructions below.
+//! traditional way by following the instructions below.
 //!
 //!
 //! ## Compiling
@@ -56,8 +56,8 @@
 //! 2. Clone the project `$ git clone https://github.com/kbknapp/cargo-graph
 //! && cd cargo-graph`
 //! 3. Build the project `$ cargo build --release` (**NOTE:** There is a large
-//! performance differnce when compiling without optimizations, so I recommend
-//! alwasy using `--release` to enable to them)
+//! performance difference when compiling without optimizations, so I recommend
+//! always using `--release` to enable to them)
 //! 4. Once complete, the binary will be located at
 //! `target/release/cargo-graph`
 //!
@@ -117,7 +117,7 @@
 //! ### Options
 //!
 //! There are a few options for using `cargo-graph` which should be somewhat
-//! self explanitory.
+//! self explanatory.
 //!
 //! ```ignore
 //! USAGE:
@@ -175,7 +175,7 @@
 //! to 'black')
 //! [values: blue black yellow purple
 //! green red white orange]
-//! --optional-deps <true|false>     Should opitonal deps be in the
+//! --optional-deps <true|false>     Should optional deps be in the
 //! graph? (Defaults to 'true')
 //! ex. --optional-deps=false OR
 //! --optional-deps=no
@@ -285,7 +285,7 @@ fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
                     .takes_value(true)
                     .value_name("true|false"),
                 Arg::with_name("optional-deps")
-                    .help("Should opitonal deps be in the graph? (Defaults to \'true\'){n}\
+                    .help("Should optional deps be in the graph? (Defaults to \'true\'){n}\
                            ex. --optional-deps=false OR --optional-deps=no")
                     .long("--optional-deps")
                     .takes_value(true)
