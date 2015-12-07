@@ -7,7 +7,7 @@ A `cargo` subcommand for building GraphViz DOT files of dependency graphs. This 
 
 ## Demo
 
-Let's say we wanted to build a dependency graph of [cargo-count](https://github.com/kbknapp/cargo-count) but we wanted optional dependencies to use red dashed lines and black boxes, and regular (aka "build") dependencies to use orange lines to green diamons, one would run the following.
+Let's say we wanted to build a dependency graph of [cargo-count](https://github.com/kbknapp/cargo-count) but we wanted optional dependencies to use red dashed lines and black boxes, and regular (aka "build") dependencies to use orange lines to green diamonds, one would run the following.
 
 **NOTE:** GraphViz `dot` needs to be installed to produce the .PNG from the dotfile
 
@@ -70,7 +70,7 @@ Now, *why* someone would do that to a graph is a different story...but it's poss
 $ cargo install cargo-graph
 ```
 
-This may require a nightly version of `cargo` if you get an error about the `install` command not being found. You may also compile and install the traditional way by followin the instructions below.
+This may require a nightly version of `cargo` if you get an error about the `install` command not being found. You may also compile and install the traditional way by following the instructions below.
 
 
 ## Compiling
@@ -79,7 +79,7 @@ Follow these instructions to compile `cargo-count`, then skip down to Installati
 
  1. Ensure you have current version of `cargo` and [Rust](https://www.rust-lang.org) installed
  2. Clone the project `$ git clone https://github.com/kbknapp/cargo-graph && cd cargo-graph`
- 3. Build the project `$ cargo build --release` (**NOTE:** There is a large performance differnce when compiling without optimizations, so I recommend alwasy using `--release` to enable to them)
+ 3. Build the project `$ cargo build --release` (**NOTE:** There is a large performance difference when compiling without optimizations, so I recommend always using `--release` to enable to them)
  4. Once complete, the binary will be located at `target/release/cargo-graph`
 
 ## Installation and Usage
@@ -118,7 +118,7 @@ Otherwise, ensure you have the `cargo-graph` binary in the directory which you o
 
 ### Options
 
-There are a few options for using `cargo-graph` which should be somewhat self explanitory.
+There are a few options for using `cargo-graph` which should be somewhat self explanatory.
 
 ```
 USAGE:
@@ -154,7 +154,7 @@ OPTIONS:
         --manifest-file <FILE>           Specify location of manifest file (Default 'Cargo.toml')
         --optional-color <COLOR>         Color for optional deps (Defaults to 'black')
                                           [values: blue black yellow purple green red white orange]
-        --optional-deps <true|false>     Should opitonal deps be in the graph? (Defaults to 'true')
+        --optional-deps <true|false>     Should optional deps be in the graph? (Defaults to 'true')
                                          ex. --optional-deps=false OR --optional-deps=no
         --optional-line-color <COLOR>    Line color for optional deps (Defaults to 'black')
                                           [values: blue black yellow purple green red white orange]
