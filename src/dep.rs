@@ -7,6 +7,7 @@ pub enum DepKind {
     Build,
     Dev,
     Optional,
+    Unk,
 }
 
 #[derive(Debug, PartialEq)]
@@ -19,7 +20,7 @@ impl Dep {
     pub fn new(name: String) -> Self {
         Dep {
             name: name,
-            kind: DepKind::Build,
+            kind: DepKind::Unk,
         }
     }
 
@@ -32,9 +33,9 @@ impl Dep {
 
     pub fn label<W: Write>(&self, w: &mut W, c: &Config) -> Result<()> {
         match self.kind {
-            DepKind::Build => writeln!(w, "[label={:?}{}];", self.name, c.build_style),
             DepKind::Dev => writeln!(w, "[label={:?}{}];", self.name, c.dev_style),
             DepKind::Optional => writeln!(w, "[label={:?}{}];", self.name, c.optional_style),
+            _ => writeln!(w, "[label={:?}{}];", self.name, c.build_style),
         }
 
     }

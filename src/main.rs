@@ -255,6 +255,10 @@ fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
                         .author("Kevin K. <kbknapp@gamil.com>\nMax New <maxsnew@gmail.com>")
                         .about("Generate a graph of package dependencies in graphviz format")
                         .args(vec![
+                Arg::with_name("include-versions")
+                    .help("Include the dependency version on nodes")
+                    .long("include-versions")
+                    .short("I"),
                 Arg::with_name("lock-file")
                     .help("Specify location of .lock file (Default \'Cargo.lock\')")
                     .long("lock-file")
