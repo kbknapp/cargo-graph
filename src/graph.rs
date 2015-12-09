@@ -12,14 +12,20 @@ pub struct Ed(Nd, Nd);
 
 impl Ed {
     pub fn label<W: Write>(&self, w: &mut W, dg: &DepGraph) -> io::Result<()> {
-        if let Some(dep) = dg.get(self.1) {
-            match dep.kind {
-                DepKind::Build => writeln!(w, "[label=\"\"{}];", dg.cfg.build_lines),
-                DepKind::Dev => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
-                DepKind::Optional => writeln!(w, "[label=\"\"{}];", dg.cfg.optional_lines),
-            }
-        } else {
-            writeln!(w, "[label=\"\"];")
+        use dep::DepKind::{Optional, Dev, Build};
+        let parent = dg.get(self.0).unwrap().kind;
+        let child = dg.get(self.1).unwrap().kind;
+
+        match (parent, child) {
+            (Build, Build) => writeln!(w, "[label=\"\"{}];", dg.cfg.build_lines),
+            (Build, Dev) => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
+            (Build, Optional) => writeln!(w, "[label=\"\"{}];", dg.cfg.optional_lines),
+            (Optional, Build) => writeln!(w, "[label=\"\"{}];", dg.cfg.optional_lines),
+            (Optional, Dev) => writeln!(w, "[label=\"\"{}];", dg.cfg.optional_lines),
+            (Optional, Optional) => writeln!(w, "[label=\"\"{}];", dg.cfg.optional_lines),
+            (Dev, Build) => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
+            (Dev, Dev) => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
+            (Dev, Optional) => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
         }
     }
 }
@@ -121,9 +127,11 @@ impl<'c, 'o> DepGraph<'c, 'o> {
     }
 
     pub fn render_to<W: Write>(mut self, output: &mut W) -> CliResult<()> {
+        debugln!("exec=render_to;");
         self.remove_orphans();
         self.edges.sort();
         self.edges.dedup();
+        debugln!("dg={:#?}", self);
         try!(writeln!(output, "{}", "digraph dependencies {"));
         for (i, dep) in self.nodes.iter().enumerate() {
             try!(write!(output, "\tN{}", i));
