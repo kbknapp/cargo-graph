@@ -7,7 +7,7 @@ use error::CliResult;
 
 pub type Nd = usize;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Ed(Nd, Nd);
 
 impl Ed {
@@ -122,6 +122,8 @@ impl<'c, 'o> DepGraph<'c, 'o> {
 
     pub fn render_to<W: Write>(mut self, output: &mut W) -> CliResult<()> {
         self.remove_orphans();
+        self.edges.sort();
+        self.edges.dedup();
         try!(writeln!(output, "{}", "digraph dependencies {"));
         for (i, dep) in self.nodes.iter().enumerate() {
             try!(write!(output, "\tN{}", i));

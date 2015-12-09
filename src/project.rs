@@ -154,8 +154,9 @@ impl<'c, 'o> Project<'c, 'o> {
         if let Some(table) = manifest_toml.get("dev-dependencies") {
             if let Some(table) = table.as_table() {
                 for (name, _) in table.into_iter() {
-                    self.styles.insert(name.clone(), DepKind::Dev);
-                    dg.add_child(root_id, name, Some(DepKind::Dev));
+                    let d = self.styles.entry(name.clone()).or_insert(DepKind::Dev);
+                    if self.cfg.dev_deps { *d = DepKind::Dev; };
+                    dg.add_child(root_id, name, Some(*d));
                     if !self.cfg.dev_deps {
                         self.blacklist.push(name.clone());
                     }
