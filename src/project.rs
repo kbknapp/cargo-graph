@@ -87,8 +87,8 @@ impl<'c, 'o> Project<'c, 'o> {
                                        valid string")
                               .to_owned();
                 let kind = match self.styles.get(&name) {
-                    Some(k) => k.clone(),
-                    None => DepKind::Build,
+                    Some(k) => *k,
+                    None    => DepKind::Build
                 };
                 let id = dg.find_or_add(&*name, kind);
 
@@ -130,32 +130,38 @@ impl<'c, 'o> Project<'c, 'o> {
                                            table isn't a valid string")
                                   .to_owned();
 
-        let root = Dep::new(proj_name);
+        let root = Dep::new(proj_name.clone());
         let root_id = 0;
         let mut dg = DepGraph::with_root(root, self.cfg);
+        self.styles.insert(proj_name.clone(), DepKind::Build);
+        let mut v = vec![];
 
         if let Some(table) = manifest_toml.get("dependencies") {
             if let Some(table) = table.as_table() {
                 for (name, dep_table) in table.into_iter() {
                     if let Some(&Value::Boolean(opt)) = dep_table.lookup("optional") {
-                        self.styles.insert(name.clone(), DepKind::Optional);
-                        dg.add_child(root_id, name, Some(DepKind::Optional));
+                        let d = self.styles.entry(name.clone()).or_insert(DepKind::Optional);
+                        if self.cfg.optional_deps && opt { *d = DepKind::Optional; };
+                        dg.add_child(root_id, name, Some(*d));
                         if !self.cfg.optional_deps && opt {
                             self.blacklist.push(name.clone());
                         }
                     } else {
                         self.styles.insert(name.clone(), DepKind::Build);
                         dg.add_child(root_id, name, None);
+                        v.push(name.clone());
                     }
                 }
+                self.dep_tree.insert(proj_name.clone(), v);
             }
         }
 
         if let Some(table) = manifest_toml.get("dev-dependencies") {
             if let Some(table) = table.as_table() {
                 for (name, _) in table.into_iter() {
-                    self.styles.insert(name.clone(), DepKind::Dev);
-                    dg.add_child(root_id, name, Some(DepKind::Dev));
+                    let d = self.styles.entry(name.clone()).or_insert(DepKind::Dev);
+                    if self.cfg.dev_deps && *d != DepKind::Build { *d = DepKind::Dev; };
+                    dg.add_child(root_id, name, Some(*d));
                     if !self.cfg.dev_deps {
                         self.blacklist.push(name.clone());
                     }

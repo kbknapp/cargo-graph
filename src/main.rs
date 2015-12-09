@@ -390,7 +390,7 @@ fn execute(cfg: Config) -> CliResult<()> {
             graph.render_to(&mut bw)
         }
         Some(file) => {
-            let o = File::create(&Path::new(&file)).ok().expect("Failed to create file");
+            let o = File::create(&Path::new(&file)).expect("Failed to create file");
             let mut bw = BufWriter::new(o);
             graph.render_to(&mut bw)
         }
