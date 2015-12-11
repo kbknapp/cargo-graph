@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use toml::Value;
 
@@ -11,27 +11,6 @@ use util;
 const INTERNAL_ERROR: &'static str = "error: a fatal internal error has occurred, this is \
                                              a bug - please consider filing a bug report at\n\t\
                                              https://github.com/kbknapp/cargo-graph/issues";
-// macro_rules! propagate_kind {
-//     ($me:ident, $kind:expr) => ({
-        // let mut changes = false;
-            // for (dep, children) in &$me.dep_tree {
-            //     debugln!("iter; dep={}; children={:?}", dep, children);
-            //     if $me.styles.get(dep).expect(INTERNAL_ERROR) == &$kind {
-            //         for child in children {
-            //             if $me.styles.get(child).unwrap() != &$kind {
-            //                 debugln!("iter; child={}; kind={:?}", child, &$kind);
-            //                 *$me.styles.get_mut(child).unwrap() = $kind;
-            //                 changes = true;
-            //             }
-            //         }
-            //     }
-            // }
-            // if !changes { break; }
-            // changes = false;
-//         }
-//     });
-// }
-
 #[derive(Debug)]
 pub struct Project<'c, 'o>
     where 'o: 'c
@@ -39,7 +18,6 @@ pub struct Project<'c, 'o>
     cfg: &'c Config<'o>,
     styles: HashMap<String, DepKind>,
     dep_tree: HashMap<String, Vec<String>>,
-    // blacklist: Vec<String>,
 }
 
 impl<'c, 'o> Project<'c, 'o> {
@@ -48,7 +26,6 @@ impl<'c, 'o> Project<'c, 'o> {
             cfg: cfg,
             styles: HashMap::new(),
             dep_tree: HashMap::new(),
-            // blacklist: vec![],
         })
     }
 
@@ -62,33 +39,33 @@ impl<'c, 'o> Project<'c, 'o> {
         Ok(dg)
     }
 
-    fn update_styles(&mut self, dg: &mut DepGraph<'c, 'o>) {
-        debugln!("exec=upate_styles; styles={:#?}", self.styles);
-        let mut parents: HashMap<_, _> = self.dep_tree.keys().cloned().map(|n| (n, false)).collect();
-        parents.remove(&dg.root);
-        for child in self.dep_tree.get(&dg.root).expect(INTERNAL_ERROR) {
+    fn propagate(&mut self, root: &str, done: &mut HashSet<String>) {
+        let root_kids = self.dep_tree.get(root).expect(INTERNAL_ERROR);
+        for child in  root_kids {
+            done.insert(child.to_owned());
             debugln!("iter=upate_styles; child={}", child);
-            *parents.get_mut(child).expect(INTERNAL_ERROR) = true;
-        }
-        loop {
-            debugln!("iter=upate_styles; parents={:#?}", parents);
-            let parent = if let Some(parent) = parents.iter().filter(|&(n, &s)| s).map(|(n,_)| n).nth(0) {
-                debugln!("{} set to true", &*parent);
-                parent.clone()
-            } else {
-                debugln!("nothing true any more; parents={:#?}", parents);
-                break;
-            };
-            parents.remove(&parent);
-            let kind = self.styles.get(&parent).expect(INTERNAL_ERROR).clone();
-            for child in self.dep_tree.get(&parent).expect(INTERNAL_ERROR) {
-                if let Some(c) = parents.get_mut(child) {
-                    *c = true;
-                }
-                if let Some(k) = self.styles.get_mut(child) {
-                    *k = kind;
+            let kind = *self.styles.get(child).expect(INTERNAL_ERROR);
+            for g_child in self.dep_tree.get(child).expect(INTERNAL_ERROR) {
+                if !root_kids.contains(g_child) {
+                    if let Some(k) = self.styles.get_mut(g_child) {
+                        debugln!("iter; setting child={}; to kind={:?}", g_child, kind);
+                        if !(kind != DepKind::Build && *k == DepKind::Build) {
+                            *k = kind;
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    fn update_styles(&mut self, dg: &mut DepGraph<'c, 'o>) {
+        debugln!("exec=upate_styles; styles={:#?}", self.styles);
+        let parents: HashSet<String> = self.dep_tree.keys().map(ToOwned::to_owned).collect();
+        let mut done: HashSet<String> = HashSet::new();
+        done.insert(dg.root.clone());
+        self.propagate(&*dg.root, &mut done);
+        for p in parents {
+            self.propagate(&*p, &mut done);
         }
         for (name, kind) in &self.styles {
             if (*kind == DepKind::Dev && !self.cfg.dev_deps) ||
@@ -103,38 +80,8 @@ impl<'c, 'o> Project<'c, 'o> {
         dg.remove_orphans();
     }
 
-    fn update_name(&mut self, old: &str, new: &str, dg: &mut DepGraph<'c, 'o>) {
-        debugln!("exec=update_name; old={}; new={};", old, new);
-        let kind = self.styles.remove(old);
-        if let Some(k) = kind {
-            debugln!("found and removed {}, adding {} which is {:?}", old, new, k);
-            self.styles.insert(new.to_owned(), k);
-            let kids = self.dep_tree.remove(old);
-            if let Some(k) = kids {
-                self.dep_tree.insert(new.to_owned(), k);
-            }
-            dg.update_name(old, new);
-        } else {
-            debugln!("{} not found", old);
-        }
-        if let Some(ref mut v) = self.dep_tree.get_mut(&dg.root) {
-            debugln!("Searching for match in root children");
-            let mut j = v.len();
-            for (i, d) in v.iter().enumerate() {
-                debugln!("iter; i={}; d={}", i, d);
-                if d == old { j = i; break; }
-            }
-            debugln!("iter; v_before={:?}", v);
-            if j < v.len() {
-                v.push(new.to_owned());
-                v.swap_remove(j);
-                debugln!("iter; v_after={:?}", v);
-            }
-        }
-    }
-
     fn parse_lock_file(&mut self, dg: &mut DepGraph<'c, 'o>) -> CliResult<()> {
-        debugln!("exec=parse_lock_file;self={:#?}", self);
+        debugln!("exec=parse_lock_file; styles={:#?}", self.styles);
         let lock_path = try!(util::find_manifest_file(self.cfg.lock_file));
         let lock_toml = try!(util::toml_from_file(lock_path));
 
@@ -145,30 +92,29 @@ impl<'c, 'o> Project<'c, 'o> {
             }
             for pkg in packages {
                 let mut children = vec![];
-                let d_name = pkg.lookup("name")
+                let name = pkg.lookup("name")
                               .expect("no 'name' field in Cargo.lock [package] table")
                               .as_str()
                               .expect("'name' field of [package] table in Cargo.lock was not a \
-                                       valid string");
-                let name = if self.cfg.include_vers {
-                    let name = format!("{} v{}", d_name,
-                        pkg.lookup("version")
+                                       valid string")
+                              .to_owned();
+                if self.cfg.include_vers {
+                    let ver = pkg.lookup("version")
                               .expect("no 'version' field in Cargo.lock [package] table")
                               .as_str()
                               .expect("'version' field of [package] table in Cargo.lock was not a \
-                                       valid string"));
-                    self.update_name(d_name, &*name, dg);
-                    name
-                } else {
-                    d_name.to_owned()
-                };
-                let kind = match self.styles.get(&name) {
+                                       valid string")
+                              .to_owned();
+                    dg.update_ver(&*name, ver);
+                }
+                debugln!("iter; checking kind for {}", name);
+                let kind = match self.styles.get(&*name) {
                     Some(k) => {
-                        debugln!("Got kind {:?} for {}", *k, &*name);
+                        debugln!("Got kind {:?} for {}", *k, name);
                         *k
                     },
                     None    => {
-                        debugln!("{} not found, returning Unk", &*name);
+                        debugln!("{} not found, returning Unk", name);
                         DepKind::Unk
                     }
                 };
@@ -177,17 +123,14 @@ impl<'c, 'o> Project<'c, 'o> {
                 if let Some(&Value::Array(ref deps)) = pkg.lookup("dependencies") {
                     for dep in deps {
                         let dep_vec = dep.as_str().unwrap_or("").split(" ").collect::<Vec<_>>();
-                        let dep_string = if self.cfg.include_vers {
-                            let name = format!("{} v{}", dep_vec[0], dep_vec[1]);
-                            self.update_name(&*dep_vec[0], &*name, dg);
-                            name
-                        } else {
-                            dep_vec[0].to_owned()
-                        };
-
+                        let dep_string = dep_vec[0].to_owned();
+                        if self.cfg.include_vers {
+                            let ver = dep_vec[1];
+                            dg.update_ver(&*dep_string, ver);
+                        }
                         children.push(dep_string.clone());
-                        self.styles.insert(dep_string.clone(), kind);
-                        dg.add_child(id, &*dep_string, Some(kind));
+                        let kind = self.styles.entry(dep_string.clone()).or_insert(DepKind::Unk);
+                        dg.add_child(id, &*dep_string, Some(*kind));
                     }
                     self.dep_tree.insert(name.clone(), children);
                 } else {
@@ -225,7 +168,9 @@ impl<'c, 'o> Project<'c, 'o> {
                                   .as_str()
                                   .expect("'version' field in the project manifest file's [package] \
                                            table isn't a valid string");
-            Dep::with_kind(format!("{} v{}", proj_name.clone(), proj_ver), DepKind::Build)
+            let mut d = Dep::with_kind(proj_name.clone(), DepKind::Build);
+            d.ver(proj_ver);
+            d
         } else {
             Dep::with_kind(proj_name.clone(), DepKind::Build)
         };

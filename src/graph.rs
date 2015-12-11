@@ -79,10 +79,10 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         }
     }
 
-    pub fn update_name(&mut self, old: &str, new: &str) {
-        if let Some(id) = self.find(old) {
+    pub fn update_ver<S: Into<String>>(&mut self, name: &str, ver: S) {
+        if let Some(id) = self.find(name) {
             if let Some(dep) = self.get_mut(id) {
-                dep.name = new.to_owned();
+                dep.ver(ver);
             }
         }
     }
@@ -209,10 +209,10 @@ impl<'c, 'o> DepGraph<'c, 'o> {
 
     pub fn render_to<W: Write>(mut self, output: &mut W) -> CliResult<()> {
         debugln!("exec=render_to;");
-        self.remove_orphans();
-        self.remove_self_pointing();
         self.edges.sort();
         self.edges.dedup();
+        self.remove_orphans();
+        self.remove_self_pointing();
         debugln!("dg={:#?}", self);
         try!(writeln!(output, "{}", "digraph dependencies {"));
         for (i, dep) in self.nodes.iter().enumerate() {
