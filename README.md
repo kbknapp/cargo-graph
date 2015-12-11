@@ -126,6 +126,7 @@ USAGE:
 
 FLAGS:
     -h, --help       Prints help information
+    -I, --include-versions    Include the dependency version on nodes
     -V, --version    Prints version information
 
 OPTIONS:
