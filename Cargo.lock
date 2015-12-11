@@ -1,11 +1,11 @@
 [root]
 name = "cargo-graph"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "ansi_term 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 1.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "clippy 0.0.29 (registry+https://github.com/rust-lang/crates.io-index)",
- "toml 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clippy 0.0.30 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.1.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -31,7 +31,7 @@ dependencies = [
 
 [[package]]
 name = "clippy"
-version = "0.0.29"
+version = "0.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "unicode-normalization 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -49,7 +49,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "toml"
-version = "0.1.23"
+version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "rustc-serialize 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
