@@ -41,7 +41,7 @@ impl fmt::Display for Ed {
 pub struct DepGraph<'c, 'o>
     where 'o: 'c
 {
-    nodes: Vec<Dep>,
+    pub nodes: Vec<Dep>,
     pub edges: Vec<Ed>,
     cfg: &'c Config<'o>,
 }
@@ -78,8 +78,29 @@ impl<'c, 'o> DepGraph<'c, 'o> {
 
     pub fn remove(&mut self, name: &str) {
         if let Some(id) = self.find(name) {
-            debugln!("Removing node: {} index {}", name, id);
+            debugln!("remove; name={}; index={}", name, id);
             self.nodes.remove(id);
+            self.shift_edges_after_node(id);
+        }
+    }
+
+    fn shift_edges_after_node(&mut self, id: usize) {
+        enum Side {
+            Left,
+            Right,
+        }
+        let mut to_upd = vec![];
+        for c in id..self.nodes.len() {
+            for (eid, &Ed(idl, idr)) in self.edges.iter().enumerate() {
+                if idl == c { to_upd.push((eid, Side::Left, c-1)); }
+                if idr == c { to_upd.push((eid, Side::Right, c-1)); }
+            }
+        }
+        for (eid, side, new) in to_upd {
+            match side {
+                Side::Left => self.edges[eid].0 = new,
+                Side::Right => self.edges[eid].1 = new,
+            }
         }
     }
 
@@ -97,6 +118,55 @@ impl<'c, 'o> DepGraph<'c, 'o> {
                 continue;
             }
             break;
+        }
+        debugln!("remove_orphans; nodes={:?}", self.nodes);
+        loop {
+            let mut removed = false;
+            let mut used = vec![false; self.nodes.len()];
+            used[0] = true;
+            for &Ed(_, idr) in &self.edges {
+                debugln!("remove_orphans; idr={}", idr);
+                used[idr] = true;
+            }
+            debugln!("remove_orphans; unsued_nodes={:?}", used);
+
+            for (id, &u) in used.iter().enumerate() {
+                if !u {
+                    debugln!("remove_orphans; removing={}", id);
+                    self.nodes.remove(id);
+                    removed = true;
+                    break;
+                }
+            }
+            if !removed {
+                break;
+            }
+        }
+    }
+
+    fn remove_self_pointing(&mut self) {
+        loop {
+            let mut found = false;
+            let mut self_p = vec![false; self.edges.len()];
+            for (eid ,&Ed(idl, idr)) in self.edges.iter().enumerate() {
+                if idl == idr {
+                    found = true;
+                    self_p[eid] = true;
+                    break;
+                }
+            }
+            debugln!("remove_self_pointing; self_pointing={:?}", self_p);
+
+            for (id, &u) in self_p.iter().enumerate() {
+                if u {
+                    debugln!("remove_self_pointing; removing={}", id);
+                    self.edges.remove(id);
+                    break;
+                }
+            }
+            if !found {
+                break;
+            }
         }
     }
 
@@ -129,6 +199,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
     pub fn render_to<W: Write>(mut self, output: &mut W) -> CliResult<()> {
         debugln!("exec=render_to;");
         self.remove_orphans();
+        self.remove_self_pointing();
         self.edges.sort();
         self.edges.dedup();
         debugln!("dg={:#?}", self);
