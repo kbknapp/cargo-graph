@@ -26,6 +26,7 @@ impl Ed {
             (Dev, Build) => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
             (Dev, Dev) => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
             (Dev, Optional) => writeln!(w, "[label=\"\"{}];", dg.cfg.dev_lines),
+            _               => writeln!(w, "[label=\"\"];")
         }
     }
 }
@@ -43,12 +44,14 @@ pub struct DepGraph<'c, 'o>
 {
     pub nodes: Vec<Dep>,
     pub edges: Vec<Ed>,
+    pub root: String,
     cfg: &'c Config<'o>,
 }
 
 impl<'c, 'o> DepGraph<'c, 'o> {
     pub fn with_root(root: Dep, cfg: &'c Config<'o>) -> Self {
         DepGraph {
+            root: root.name.clone(),
             nodes: vec![root],
             edges: vec![],
             cfg: cfg,
@@ -56,7 +59,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
     }
 
     pub fn add_child(&mut self, parent: usize, d: &str, k: Option<DepKind>) -> usize {
-        let idr = self.find_or_add(d, k.unwrap_or(DepKind::Build));
+        let idr = self.find_or_add(d, k.unwrap_or(DepKind::Unk));
         self.edges.push(Ed(parent, idr));
         idr
     }
@@ -72,6 +75,14 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         if let Some(id) = self.find(name) {
             if let Some(dep) = self.get_mut(id) {
                 dep.kind = kind;
+            }
+        }
+    }
+
+    pub fn update_ver<S: Into<String>>(&mut self, name: &str, ver: S) {
+        if let Some(id) = self.find(name) {
+            if let Some(dep) = self.get_mut(id) {
+                dep.ver(ver);
             }
         }
     }
@@ -198,10 +209,10 @@ impl<'c, 'o> DepGraph<'c, 'o> {
 
     pub fn render_to<W: Write>(mut self, output: &mut W) -> CliResult<()> {
         debugln!("exec=render_to;");
-        self.remove_orphans();
-        self.remove_self_pointing();
         self.edges.sort();
         self.edges.dedup();
+        self.remove_orphans();
+        self.remove_self_pointing();
         debugln!("dg={:#?}", self);
         try!(writeln!(output, "{}", "digraph dependencies {"));
         for (i, dep) in self.nodes.iter().enumerate() {

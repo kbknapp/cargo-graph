@@ -130,6 +130,7 @@ pub struct Config<'a> {
     pub build_style: DepStyle,
     pub dev_style: DepStyle,
     pub optional_style: DepStyle,
+    pub include_vers: bool,
 }
 
 impl<'a> Config<'a> {
@@ -165,6 +166,7 @@ impl<'a> Config<'a> {
                                     .unwrap_or(DotShape::Round),
                                 value_t!(m.value_of("dev-color"), DotColor)
                                     .unwrap_or(DotColor::Black)),
+            include_vers: m.is_present("include-versions"),
         })
     }
 }
