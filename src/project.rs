@@ -34,7 +34,7 @@ pub struct Project<'c, 'o>
     cfg: &'c Config<'o>,
     styles: HashMap<String, DepKind>,
     dep_tree: HashMap<String, Vec<String>>,
-    blacklist: Vec<String>,
+    // blacklist: Vec<String>,
 }
 
 impl<'c, 'o> Project<'c, 'o> {
@@ -43,7 +43,7 @@ impl<'c, 'o> Project<'c, 'o> {
             cfg: cfg,
             styles: HashMap::new(),
             dep_tree: HashMap::new(),
-            blacklist: vec![],
+            // blacklist: vec![],
         })
     }
 
@@ -61,6 +61,7 @@ impl<'c, 'o> Project<'c, 'o> {
         propagate_kind!(self, DepKind::Dev);
         propagate_kind!(self, DepKind::Optional);
         propagate_kind!(self, DepKind::Build);
+        debugln!("updatee_styles; nodes_before={:#?}", dg.nodes);
         for (name, kind) in &self.styles {
             if (*kind == DepKind::Dev && !self.cfg.dev_deps) ||
                (*kind == DepKind::Optional && !self.cfg.optional_deps) ||
@@ -70,6 +71,7 @@ impl<'c, 'o> Project<'c, 'o> {
                 dg.update_style(&*name, *kind);
             }
         }
+        debugln!("updatee_styles; nodes_after={:#?}", dg.nodes);
         dg.remove_orphans();
     }
 
@@ -143,9 +145,9 @@ impl<'c, 'o> Project<'c, 'o> {
                         let d = self.styles.entry(name.clone()).or_insert(DepKind::Optional);
                         if self.cfg.optional_deps && opt { *d = DepKind::Optional; };
                         dg.add_child(root_id, name, Some(*d));
-                        if !self.cfg.optional_deps && opt {
-                            self.blacklist.push(name.clone());
-                        }
+                        // if !self.cfg.optional_deps && opt {
+                        //     self.blacklist.push(name.clone());
+                        // }
                     } else {
                         self.styles.insert(name.clone(), DepKind::Build);
                         dg.add_child(root_id, name, None);
@@ -162,9 +164,9 @@ impl<'c, 'o> Project<'c, 'o> {
                     let d = self.styles.entry(name.clone()).or_insert(DepKind::Dev);
                     if self.cfg.dev_deps && *d != DepKind::Build { *d = DepKind::Dev; };
                     dg.add_child(root_id, name, Some(*d));
-                    if !self.cfg.dev_deps {
-                        self.blacklist.push(name.clone());
-                    }
+                    // if !self.cfg.dev_deps {
+                    //     self.blacklist.push(name.clone());
+                    // }
                 }
             }
         }
