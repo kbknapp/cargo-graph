@@ -117,19 +117,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
 
     pub fn remove_orphans(&mut self) {
         let len = self.nodes.len();
-        loop {
-            let mut to_rem = None;
-            for (eid, &Ed(idl, idr)) in self.edges.iter().enumerate() {
-                if idl > len || idr > len {
-                    to_rem = Some(eid);
-                }
-            }
-            if let Some(id) = to_rem {
-                self.edges.remove(id);
-                continue;
-            }
-            break;
-        }
+        self.edges.retain(|&Ed(idl,idr)| idl < len && idr < len);
         debugln!("remove_orphans; nodes={:?}", self.nodes);
         loop {
             let mut removed = false;
