@@ -1,6 +1,6 @@
 [package]
 name = "cargo-graph"
-version = "0.2.0"
+version = "0.2.2"
 authors = [
     "Kevin K. <kbknapp@gmail.com>",
     "Max New <maxsnew@gmail.com>"
