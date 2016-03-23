@@ -246,7 +246,7 @@ static COLORS: [&'static str; 8] = ["blue", "black", "yellow", "purple", "green"
                                     "orange"];
 static DEP_SHAPES: [&'static str; 4] = ["box", "round", "diamond", "triangle"];
 
-fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
+fn parse_cli<'a>() -> ArgMatches<'a> {
     App::new("cargo-graph")
         .version(&*format!("v{}", crate_version!()))
         .bin_name("cargo")
@@ -254,121 +254,42 @@ fn parse_cli<'a, 'b>() -> ArgMatches<'a, 'b> {
         .subcommand(SubCommand::with_name("graph")
                         .author("Kevin K. <kbknapp@gamil.com>\nMax New <maxsnew@gmail.com>")
                         .about("Generate a graph of package dependencies in graphviz format")
-                        .args(vec![
-                Arg::with_name("include-versions")
-                    .help("Include the dependency version on nodes")
-                    .long("include-versions")
-                    .short("I"),
-                Arg::with_name("lock-file")
-                    .help("Specify location of .lock file (Default \'Cargo.lock\')")
-                    .long("lock-file")
-                    .value_name("FILE")
-                    .validator(is_file)
-                    .takes_value(true),
-                Arg::with_name("manifest-file")
-                    .help("Specify location of manifest file (Default \'Cargo.toml\')")
-                    .long("manifest-file")
-                    .value_name("FILE")
-                    .validator(is_file)
-                    .takes_value(true),
-                Arg::with_name("dot-file")
-                    .help("Output file (Default to stdout)")
-                    .long("dot-file")
-                    .takes_value(true)
-                    .value_name("FILE"),
-                Arg::with_name("dev-deps")
-                    .help("Should dev deps be included in the graph? (Defaults to \'false\'){n}\
-                           ex. --dev-deps=true OR --dev-deps=yes")
-                    .long("--dev-deps")
-                    .takes_value(true)
-                    .value_name("true|false"),
-                Arg::with_name("build-deps")
-                    .help("Should build deps be in the graph? (Defaults to \'true\'){n}\
-                           ex. --build-deps=false OR --build-deps=no")
-                    .long("--build-deps")
-                    .takes_value(true)
-                    .value_name("true|false"),
-                Arg::with_name("optional-deps")
-                    .help("Should optional deps be in the graph? (Defaults to \'true\'){n}\
-                           ex. --optional-deps=false OR --optional-deps=no")
-                    .long("--optional-deps")
-                    .takes_value(true)
-                    .value_name("true|false"),
-                // REGULAR "BUILD" DEP STYLE OPTIONS
-                Arg::with_name("build-line-style")
-                    .help("Line style for build deps (Defaults to \'solid\'){n}")
-                    .long("build-line-style")
-                    .takes_value(true)
-                    .value_name("STYLE")
-                    .possible_values(&LINE_STYLES),
-                Arg::with_name("build-line-color")
-                    .help("Line color for regular deps (Defaults to \'black\'){n}")
-                    .long("build-line-color")
-                    .takes_value(true)
-                    .value_name("COLOR")
-                    .possible_values(&COLORS),
-                Arg::with_name("build-shape")
-                    .help("Shape for regular deps (Defaults to \'round\'){n}")
-                    .long("build-shape")
-                    .takes_value(true)
-                    .value_name("SHAPE")
-                    .possible_values(&DEP_SHAPES),
-                Arg::with_name("build-color")
-                    .help("Color for regular deps (Defaults to \'black\'){n}")
-                    .long("build-color")
-                    .takes_value(true)
-                    .value_name("COLOR")
-                    .possible_values(&COLORS),
-                // OPTIONAL DEP STYLE OPTIONS
-                Arg::with_name("optional-line-style")
-                    .help("Line style for optional deps (Defaults to \'solid\'){n}")
-                    .long("optional-line-style")
-                    .takes_value(true)
-                    .value_name("STYLE")
-                    .possible_values(&LINE_STYLES),
-                Arg::with_name("optional-line-color")
-                    .help("Line color for optional deps (Defaults to \'black\'){n}")
-                    .long("optional-line-color")
-                    .takes_value(true)
-                    .value_name("COLOR")
-                    .possible_values(&COLORS),
-                Arg::with_name("optional-shape")
-                    .help("Shape for optional deps (Defaults to \'round\'){n}")
-                    .long("optional-shape")
-                    .takes_value(true)
-                    .value_name("SHAPE")
-                    .possible_values(&DEP_SHAPES),
-                Arg::with_name("optional-color")
-                    .help("Color for optional deps (Defaults to \'black\'){n}")
-                    .long("optional-color")
-                    .takes_value(true)
-                    .value_name("COLOR")
-                    .possible_values(&COLORS),
-                // DEV DEP STYLE OPTIONS
-                Arg::with_name("dev-line-style")
-                    .help("Line style for dev deps (Defaults to \'solid\'){n}")
-                    .long("dev-line-style")
-                    .takes_value(true)
-                    .value_name("STYLE")
-                    .possible_values(&LINE_STYLES),
-                Arg::with_name("dev-line-color")
-                    .help("Line color for dev deps (Defaults to \'black\'){n}")
-                    .long("dev-line-color")
-                    .takes_value(true)
-                    .value_name("COLOR")
-                    .possible_values(&COLORS),
-                Arg::with_name("dev-shape")
-                    .help("Shape for dev deps (Defaults to \'round\'){n}")
-                    .long("dev-shape")
-                    .takes_value(true)
-                    .value_name("SHAPE")
-                    .possible_values(&DEP_SHAPES),
-                Arg::with_name("dev-color")
-                    .help("Color for dev deps (Defaults to \'black\'){n}")
-                    .long("dev-color")
-                    .takes_value(true)
-                    .value_name("COLOR")
-                    .possible_values(&COLORS)]))
+                        .args_from_usage("
+                            -I, --include-versions 'Include the dependency version on nodes'
+                                --dot-file [PATH] 'Output file (Default stdout)'
+                                --dev-deps [true|false] 'Should dev deps be included in the graph? (Default false, also allows yes|no)'
+                                --build-deps [true|false] 'Should build deps be in the graph? (Default true, also allows yes|no)'
+                                --optional-deps [true|false] 'Should optional deps be in the graph? (Default true, also allows yes|no)'
+                        ")
+                        .args(&[
+                            Arg::from_usage("--lock-file [PATH] 'Specify location of .lock file (Default Cargo.lock)'")
+                                .validator(is_file),
+                            Arg::from_usage("--manifest-file [PATH] 'Specify location of manifest file (Default Cargo.toml)'")
+                                .validator(is_file),
+                            Arg::from_usage("--build-line-style [STYLE] 'Line style for build deps (Default solid)'")
+                                .possible_values(&LINE_STYLES),
+                            Arg::from_usage("--build-line-color [COLOR] 'Line color for regular deps (Default black)'")
+                                .possible_values(&COLORS),
+                            Arg::from_usage("--build-shape [SHAPE] 'Shape for regular deps (Default round)'")
+                                .possible_values(&DEP_SHAPES),
+                            Arg::from_usage("--build-color [COLOR] 'Color for regular deps (Default black)'")
+                                .possible_values(&COLORS),
+                            Arg::from_usage("--optional-line-style [STYLE] 'Line style for optional deps (Default solid)'")
+                                .possible_values(&LINE_STYLES),
+                            Arg::from_usage("--optional-line-color [COLOR] 'Line color for optional deps (Default black)'")
+                                .possible_values(&COLORS),
+                            Arg::from_usage("--optional-shape [SHAPE] 'Shape for optional deps (Default round)'")
+                                .possible_values(&DEP_SHAPES),
+                            Arg::from_usage("--optional-color [COLOR] 'Color for optional deps (Default black)'")
+                                .possible_values(&COLORS),
+                            Arg::from_usage("--dev-line-style [STYLE] 'Line style for dev deps (Default solid)'")
+                                .possible_values(&LINE_STYLES),
+                            Arg::from_usage("--dev-line-color [COLOR] 'Line color for dev deps (Default black)'")
+                                .possible_values(&COLORS),
+                            Arg::from_usage("--dev-shape [SHAPE] 'Shape for dev deps (Default round)'")
+                                .possible_values(&DEP_SHAPES),
+                            Arg::from_usage("--dev-color [COLOR] 'Color for dev deps (Default black)'")
+                                .possible_values(&COLORS)]))
         .get_matches()
 }
 
