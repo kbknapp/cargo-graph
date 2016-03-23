@@ -84,12 +84,8 @@ impl Error for CliError {
 
     fn cause(&self) -> Option<&Error> {
         match self.kind {
-            CliErrorKind::Generic(..) => None,
-            CliErrorKind::UnknownBoolArg => None,
-            CliErrorKind::TomlTableRoot => None,
-            CliErrorKind::CurrentDir => None,
-            CliErrorKind::Unknown => None,
             CliErrorKind::Io(ref e) => Some(e),
+            _ => None
         }
     }
 }

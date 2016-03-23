@@ -122,7 +122,7 @@ impl<'c, 'o> Project<'c, 'o> {
 
                 if let Some(&Value::Array(ref deps)) = pkg.lookup("dependencies") {
                     for dep in deps {
-                        let dep_vec = dep.as_str().unwrap_or("").split(" ").collect::<Vec<_>>();
+                        let dep_vec = dep.as_str().unwrap_or("").split(' ').collect::<Vec<_>>();
                         let dep_string = dep_vec[0].to_owned();
                         if self.cfg.include_vers {
                             let ver = dep_vec[1];

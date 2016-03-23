@@ -1,6 +1,6 @@
 [package]
 name = "cargo-graph"
-version = "0.2.0"
+version = "0.2.2"
 authors = [
     "Kevin K. <kbknapp@gmail.com>",
     "Max New <maxsnew@gmail.com>"
@@ -17,9 +17,9 @@ name = "cargo-graph"
 
 [dependencies]
 toml = "~0.1.22"
-clap = "~1.5"
+clap = "~2.2.1"
 ansi_term = { version = "~0.7", optional = true }
-clippy    = { version = "~0.0", optional = true }
+clippy    = { version = "=0.0.55", optional = true }
 
 [features]
 default = ["color"]
