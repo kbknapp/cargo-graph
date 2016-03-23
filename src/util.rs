@@ -20,7 +20,7 @@ pub fn toml_from_file<P: AsRef<Path>>(p: P) -> CliResult<Box<Table>> {
     }
 
     // On err
-    let mut error_str = format!("could not parse input as TOML\n");
+    let mut error_str = String::from("could not parse input as TOML\n");
     for error in parser.errors.iter() {
         let (loline, locol) = parser.to_linecol(error.lo);
         let (hiline, hicol) = parser.to_linecol(error.hi);
