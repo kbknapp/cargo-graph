@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::ascii::AsciiExt;
 use std::fmt;
 
