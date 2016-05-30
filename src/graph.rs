@@ -2,19 +2,19 @@ use std::fmt;
 use std::io::{self, Write};
 
 use config::Config;
-use dep::{Dep, DepKind};
+use dep::ResolvedDep;
 use error::CliResult;
 
 pub type Nd = usize;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub struct Ed(Nd, Nd);
+pub struct Ed(pub Nd, pub Nd);
 
 impl Ed {
     pub fn label<W: Write>(&self, w: &mut W, dg: &DepGraph) -> io::Result<()> {
         use dep::DepKind::{Optional, Dev, Build};
-        let parent = dg.get(self.0).unwrap().kind;
-        let child = dg.get(self.1).unwrap().kind;
+        let parent = dg.get(self.0).unwrap().kind();
+        let child = dg.get(self.1).unwrap().kind();
 
         match (parent, child) {
             (Build, Build) => writeln!(w, "[label=\"\"{}];", dg.cfg.build_lines),
@@ -42,62 +42,42 @@ impl fmt::Display for Ed {
 pub struct DepGraph<'c, 'o>
     where 'o: 'c
 {
-    pub nodes: Vec<Dep>,
+    pub nodes: Vec<ResolvedDep>,
     pub edges: Vec<Ed>,
-    pub root: String,
     cfg: &'c Config<'o>,
 }
 
 impl<'c, 'o> DepGraph<'c, 'o> {
-    pub fn with_root(root: Dep, cfg: &'c Config<'o>) -> Self {
+    pub fn new(cfg: &'c Config<'o>) -> Self {
         DepGraph {
-            root: root.name.clone(),
-            nodes: vec![root],
+            nodes: vec![],
             edges: vec![],
             cfg: cfg,
         }
     }
 
-    pub fn add_child(&mut self, parent: usize, d: &str, k: Option<DepKind>) -> usize {
-        let idr = self.find_or_add(d, k.unwrap_or(DepKind::Unk));
+    pub fn add_child(&mut self, parent: usize, dep_name: &str, dep_ver: &str) -> usize {
+        let idr = self.find_or_add(dep_name, dep_ver);
         self.edges.push(Ed(parent, idr));
         idr
     }
 
-    pub fn get(&self, id: usize) -> Option<&Dep> {
+    pub fn get(&self, id: usize) -> Option<&ResolvedDep> {
         if id < self.nodes.len() {
             return Some(&self.nodes[id]);
         }
         None
     }
 
-    pub fn update_style(&mut self, name: &str, kind: DepKind) {
-        if let Some(id) = self.find(name) {
-            if let Some(dep) = self.get_mut(id) {
-                dep.kind = kind;
-            }
-        }
-    }
-
-    pub fn update_ver<S: Into<String>>(&mut self, name: &str, ver: S) {
-        if let Some(id) = self.find(name) {
-            if let Some(dep) = self.get_mut(id) {
-                dep.ver(ver);
-            }
-        }
-    }
-
-    pub fn remove(&mut self, name: &str) {
-        if let Some(id) = self.find(name) {
-            debugln!("remove; name={}; index={}", name, id);
-            self.nodes.remove(id);
-            // Remove edges of the removed node.
-            self.edges = self.edges.iter()
-                .filter(|e| !(e.0 == id || e.1 == id))
-                .map(|&e| e)
-                .collect();
-            self.shift_edges_after_node(id);
-        }
+    pub fn remove(&mut self, id: usize) {
+        debugln!("remove; name={}; index={}", name, id);
+        self.nodes.remove(id);
+        // Remove edges of the removed node.
+        self.edges = self.edges.iter()
+            .filter(|e| !(e.0 == id || e.1 == id))
+            .map(|&e| e)
+            .collect();
+        self.shift_edges_after_node(id);
     }
 
     fn shift_edges_after_node(&mut self, id: usize) {
@@ -186,29 +166,13 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         }
     }
 
-    pub fn get_mut(&mut self, id: usize) -> Option<&mut Dep> {
-        if id < self.nodes.len() {
-            return Some(&mut self.nodes[id]);
-        }
-        None
-    }
-
-    pub fn find(&self, name: &str) -> Option<usize> {
+    pub fn find_or_add(&mut self, name: &str, ver: &str) -> usize {
         for (i, d) in self.nodes.iter().enumerate() {
-            if d.name == name {
-                return Some(i);
-            }
-        }
-        None
-    }
-
-    pub fn find_or_add(&mut self, new: &str, k: DepKind) -> usize {
-        for (i, d) in self.nodes.iter().enumerate() {
-            if d.name == new {
+            if d.name == name && d.ver == ver {
                 return i;
             }
         }
-        self.nodes.push(Dep::with_kind(new.to_owned(), k));
+        self.nodes.push(ResolvedDep::new(name.to_owned(), ver.to_owned()));
         self.nodes.len() - 1
     }
 
