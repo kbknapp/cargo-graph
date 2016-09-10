@@ -1,196 +1,193 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use toml::Value;
 
-use dep::{Dep, DepKind};
+use dep::{DeclaredDep, DepKind};
 use graph::DepGraph;
 use error::{CliErrorKind, CliResult};
 use config::Config;
 use util;
 
-const INTERNAL_ERROR: &'static str = "error: a fatal internal error has occurred, this is \
-                                             a bug - please consider filing a bug report at\n\t\
-                                             https://github.com/kbknapp/cargo-graph/issues";
 #[derive(Debug)]
 pub struct Project<'c, 'o>
     where 'o: 'c
 {
     cfg: &'c Config<'o>,
-    styles: HashMap<String, DepKind>,
-    dep_tree: HashMap<String, Vec<String>>,
 }
 
 impl<'c, 'o> Project<'c, 'o> {
     pub fn with_config(cfg: &'c Config<'o>) -> CliResult<Self> {
-        Ok(Project {
-            cfg: cfg,
-            styles: HashMap::new(),
-            dep_tree: HashMap::new(),
-        })
+        Ok(Project { cfg: cfg })
     }
 
     pub fn graph(mut self) -> CliResult<DepGraph<'c, 'o>> {
-        let mut dg = try!(self.parse_root_deps());
-
-        try!(self.parse_lock_file(&mut dg));
-
-        self.update_styles(&mut dg);
-
+        let root_deps = try!(self.parse_root_deps());
+        let mut dg = try!(self.parse_lock_file());
+        self.set_resolved_kind(&root_deps, &mut dg);
+        if !self.cfg.include_vers {
+            Project::show_version_on_duplicates(&mut dg);
+        }
         Ok(dg)
     }
 
-    fn propagate(&mut self, root: &str, done: &mut HashSet<String>) {
-        let root_kids = self.dep_tree.get(root).expect(INTERNAL_ERROR);
-        for child in  root_kids {
-            done.insert(child.to_owned());
-            debugln!("iter=upate_styles; child={}", child);
-            let kind = *self.styles.get(child).expect(INTERNAL_ERROR);
-            for g_child in self.dep_tree.get(child).expect(INTERNAL_ERROR) {
-                if !root_kids.contains(g_child) {
-                    if let Some(k) = self.styles.get_mut(g_child) {
-                        debugln!("iter; setting child={}; to kind={:?}", g_child, kind);
-                        if !(kind != DepKind::Build && *k == DepKind::Build) {
-                            *k = kind;
+    /// Forces the version to be displayed on dependencies
+    /// that have the same name (but a different version) as another dependency.
+    fn show_version_on_duplicates(dg: &mut DepGraph<'c, 'o>) {
+        // Build a list of node IDs, sorted by the name of the dependency on that node.
+        let dep_ids_sorted_by_name = {
+            let mut deps = dg.nodes.iter().enumerate().collect::<Vec<_>>();
+            deps.sort_by_key(|dep| &*dep.1.name);
+            deps.iter().map(|dep| dep.0).collect::<Vec<_>>()
+        };
+
+        for i in 0..dep_ids_sorted_by_name.len() - 1 {
+            let dep_id_i = dep_ids_sorted_by_name[i];
+
+            // Find other nodes with the same name
+            // We need to iterate one more time after the last node to handle the break.
+            for j in i + 1..dep_ids_sorted_by_name.len() + 1 {
+                // Stop once we've found a node with a different name
+                // or reached the end of the list.
+                if j >= dep_ids_sorted_by_name.len() ||
+                   dg.nodes[dep_id_i].name != dg.nodes[dep_ids_sorted_by_name[j]].name {
+                    // If there are at least two nodes with the same name
+                    if j >= i + 2 {
+                        // Set force_write_ver = true on all nodes
+                        // from dep_ids_sorted_by_name[i] to dep_ids_sorted_by_name[j - 1].
+                        // Remember: j is pointing on the next node with a *different* name!
+                        // Remember also: i..j includes i but excludes j.
+                        for k in i..j {
+                            let dep_id_k = dep_ids_sorted_by_name[k];
+                            dg.nodes[dep_id_k].force_write_ver = true;
                         }
                     }
+
+                    break;
                 }
             }
         }
     }
 
-    fn update_styles(&mut self, dg: &mut DepGraph<'c, 'o>) {
-        debugln!("exec=upate_styles; styles={:#?}", self.styles);
-        let parents: HashSet<String> = self.dep_tree.keys().map(ToOwned::to_owned).collect();
-        let mut done: HashSet<String> = HashSet::new();
-        done.insert(dg.root.clone());
-        self.propagate(&*dg.root, &mut done);
-        for p in parents {
-            self.propagate(&*p, &mut done);
-        }
-        for (name, kind) in &self.styles {
-            if (*kind == DepKind::Dev && !self.cfg.dev_deps) ||
-               (*kind == DepKind::Optional && !self.cfg.optional_deps) ||
-               (*kind == DepKind::Build && !self.cfg.build_deps) {
-                dg.remove(&*name);
+    /// Sets the kind of dependency on each dependency
+    /// based on how the dependencies are declared in the manifest.
+    fn set_resolved_kind(&mut self, declared_deps: &[DeclaredDep], dg: &mut DepGraph<'c, 'o>) {
+        let declared_deps_map =
+            declared_deps.iter().map(|dd| (&*dd.name, dd.kind)).collect::<HashMap<_, _>>();
+
+        dg.nodes[0].is_build = true;
+
+        dg.edges.sort(); // make sure to process edges from the root node first
+        for ed in dg.edges.iter() {
+            if ed.0 == 0 {
+                // If this is an edge from the root node,
+                // set the kind based on how the dependency is declared in the manifest file.
+                if let Some(kind) = declared_deps_map.get(&*dg.nodes[ed.1].name) {
+                    match *kind {
+                        DepKind::Build => dg.nodes[ed.1].is_build = true,
+                        DepKind::Dev => dg.nodes[ed.1].is_dev = true,
+                        DepKind::Optional => dg.nodes[ed.1].is_optional = true,
+                        _ => (),
+                    }
+                }
             } else {
-                dg.update_style(&*name, *kind);
+                // If this is an edge from a dependency node, propagate the kind.
+                // This is a set of flags because a dependency can appear several times in the graph,
+                // and the kind of dependency may vary based on the path to that dependency.
+                // The flags start at false, and once they become true, they stay true.
+                // ResolvedDep::kind() will pick a kind based on their priority.
+                if dg.nodes[ed.0].is_build {
+                    dg.nodes[ed.1].is_build = true;
+                }
+
+                if dg.nodes[ed.0].is_dev {
+                    dg.nodes[ed.1].is_dev = true;
+                }
+
+                if dg.nodes[ed.0].is_optional {
+                    dg.nodes[ed.1].is_optional = true;
+                }
             }
         }
-        debugln!("updatee_styles; nodes_after={:#?}", dg.nodes);
+
+        // Remove the nodes that the user doesn't want.
+        // Start at 1 to keep the root node.
+        for id in (1..dg.nodes.len()).rev() {
+            let kind = dg.nodes[id].kind();
+            if (kind == DepKind::Build && !self.cfg.build_deps) ||
+               (kind == DepKind::Dev && !self.cfg.dev_deps) ||
+               (kind == DepKind::Optional && !self.cfg.optional_deps) {
+                dg.remove(id);
+            }
+        }
+
         dg.remove_orphans();
     }
 
-    fn parse_lock_file(&mut self, dg: &mut DepGraph<'c, 'o>) -> CliResult<()> {
-        debugln!("exec=parse_lock_file; styles={:#?}", self.styles);
+    /// Builds a graph of the resolved dependencies declared in the lock file.
+    fn parse_lock_file(&mut self) -> CliResult<DepGraph<'c, 'o>> {
+        fn parse_package<'c, 'o>(dg: &mut DepGraph<'c, 'o>, pkg: &Value) {
+            let name = pkg.lookup("name")
+                          .expect("no 'name' field in Cargo.lock [package] or [root] table")
+                          .as_str()
+                          .expect("'name' field of [package] or [root] table in Cargo.lock was not a \
+                                   valid string")
+                          .to_owned();
+            let ver = pkg.lookup("version")
+                         .expect("no 'version' field in Cargo.lock [package] or [root] table")
+                         .as_str()
+                         .expect("'version' field of [package] or [root] table in Cargo.lock was not a \
+                                  valid string")
+                         .to_owned();
+
+            let id = dg.find_or_add(&*name, &*ver);
+
+            if let Some(&Value::Array(ref deps)) = pkg.lookup("dependencies") {
+                for dep in deps {
+                    let dep_vec = dep.as_str().unwrap_or("").split(' ').collect::<Vec<_>>();
+                    let dep_string = dep_vec[0].to_owned();
+                    let ver = dep_vec[1];
+                    dg.add_child(id, &*dep_string, ver);
+                }
+            }
+        }
+
         let lock_path = try!(util::find_manifest_file(self.cfg.lock_file));
         let lock_toml = try!(util::toml_from_file(lock_path));
 
-        if let Some(&Value::Array(ref packages)) = lock_toml.get("package") {
-            if let Some(ref mut v) = self.dep_tree.get_mut(&dg.root) {
-                v.sort();
-                v.dedup();
-            }
-            for pkg in packages {
-                let mut children = vec![];
-                let name = pkg.lookup("name")
-                              .expect("no 'name' field in Cargo.lock [package] table")
-                              .as_str()
-                              .expect("'name' field of [package] table in Cargo.lock was not a \
-                                       valid string")
-                              .to_owned();
-                if self.cfg.include_vers {
-                    let ver = pkg.lookup("version")
-                              .expect("no 'version' field in Cargo.lock [package] table")
-                              .as_str()
-                              .expect("'version' field of [package] table in Cargo.lock was not a \
-                                       valid string")
-                              .to_owned();
-                    dg.update_ver(&*name, ver);
-                }
-                debugln!("iter; checking kind for {}", name);
-                let kind = match self.styles.get(&*name) {
-                    Some(k) => {
-                        debugln!("Got kind {:?} for {}", *k, name);
-                        *k
-                    },
-                    None    => {
-                        debugln!("{} not found, returning Unk", name);
-                        DepKind::Unk
-                    }
-                };
-                let id = dg.find_or_add(&*name, kind);
+        let mut dg = DepGraph::new(self.cfg);
 
-                if let Some(&Value::Array(ref deps)) = pkg.lookup("dependencies") {
-                    for dep in deps {
-                        let dep_vec = dep.as_str().unwrap_or("").split(' ').collect::<Vec<_>>();
-                        let dep_string = dep_vec[0].to_owned();
-                        if self.cfg.include_vers {
-                            let ver = dep_vec[1];
-                            dg.update_ver(&*dep_string, ver);
-                        }
-                        children.push(dep_string.clone());
-                        let kind = self.styles.entry(dep_string.clone()).or_insert(DepKind::Unk);
-                        dg.add_child(id, &*dep_string, Some(*kind));
-                    }
-                    self.dep_tree.insert(name.clone(), children);
-                } else {
-                    self.dep_tree.insert(name.clone(), vec![]);
-                }
-                self.styles.insert(name, kind);
+        if let Some(ref root) = lock_toml.get("root") {
+            parse_package(&mut dg, root);
+        } else {
+            return Err(From::from(CliErrorKind::TomlTableRoot));
+        }
+
+        if let Some(&Value::Array(ref packages)) = lock_toml.get("package") {
+            for pkg in packages {
+                parse_package(&mut dg, pkg);
             }
         }
 
         debugln!("return=parse_lock_file; self={:#?}", self);
-        Ok(())
+        Ok(dg)
     }
 
-    pub fn parse_root_deps(&mut self) -> CliResult<DepGraph<'c, 'o>> {
+    /// Builds a list of the dependencies declared in the manifest file.
+    pub fn parse_root_deps(&mut self) -> CliResult<Vec<DeclaredDep>> {
         debugln!("executing; parse_root_deps;");
         let manifest_path = try!(util::find_manifest_file(self.cfg.manifest_file));
         let manifest_toml = try!(util::toml_from_file(manifest_path));
-        let root_table = match manifest_toml.get("package") {
-            Some(table) => table,
-            None => return Err(From::from(CliErrorKind::TomlTableRoot)),
-        };
 
-        let proj_name = root_table.lookup("name")
-                                  .expect("no 'name' field in the project manifest file's \
-                                           [package] table")
-                                  .as_str()
-                                  .expect("'name' field in the project manifest file's [package] \
-                                           table isn't a valid string")
-                                  .to_owned();
-
-        let root = if self.cfg.include_vers {
-            let proj_ver = root_table.lookup("version")
-                                  .expect("no 'version' field in the project manifest file's \
-                                           [package] table")
-                                  .as_str()
-                                  .expect("'version' field in the project manifest file's [package] \
-                                           table isn't a valid string");
-            let mut d = Dep::with_kind(proj_name.clone(), DepKind::Build);
-            d.ver(proj_ver);
-            d
-        } else {
-            Dep::with_kind(proj_name.clone(), DepKind::Build)
-        };
-        let root_id = 0;
-        let root_name = root.name.clone();
-        self.styles.insert(root_name.clone(), DepKind::Build);
-        let mut dg = DepGraph::with_root(root, self.cfg);
-        self.styles.insert(proj_name.clone(), DepKind::Build);
+        let mut declared_deps = vec![];
         let mut v = vec![];
 
         if let Some(table) = manifest_toml.get("dependencies") {
             if let Some(table) = table.as_table() {
                 for (name, dep_table) in table.into_iter() {
-                    if let Some(&Value::Boolean(opt)) = dep_table.lookup("optional") {
-                        let d = self.styles.entry(name.clone()).or_insert(DepKind::Optional);
-                        if self.cfg.optional_deps && opt { *d = DepKind::Optional; };
-                        dg.add_child(root_id, name, Some(*d));
+                    if let Some(&Value::Boolean(true)) = dep_table.lookup("optional") {
+                        declared_deps.push(DeclaredDep::with_kind(name.clone(), DepKind::Optional));
                     } else {
-                        self.styles.insert(name.clone(), DepKind::Build);
-                        dg.add_child(root_id, name, Some(DepKind::Build));
+                        declared_deps.push(DeclaredDep::with_kind(name.clone(), DepKind::Build));
                     }
                     v.push(name.clone());
                 }
@@ -200,17 +197,14 @@ impl<'c, 'o> Project<'c, 'o> {
         if let Some(table) = manifest_toml.get("dev-dependencies") {
             if let Some(table) = table.as_table() {
                 for (name, _) in table.into_iter() {
-                    let d = self.styles.entry(name.clone()).or_insert(DepKind::Dev);
-                    debugln!("iter; name={}; d={:?}", name, d);
-                    if self.cfg.dev_deps && *d != DepKind::Build { *d = DepKind::Dev; };
-                    dg.add_child(root_id, name, Some(*d));
+                    declared_deps.push(DeclaredDep::with_kind(name.clone(), DepKind::Dev));
                     v.push(name.clone());
                 }
             }
         }
-        self.dep_tree.insert(root_name, v);
 
         debugln!("return=parse_root_deps; self={:#?}", self);
-        Ok(dg)
+        debugln!("return=parse_root_deps; declared_deps={:#?}", declared_deps);
+        Ok(declared_deps)
     }
 }
