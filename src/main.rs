@@ -1,5 +1,5 @@
 //!
-//! A `cargo` subcommand for building GraphViz DOT files of dependency graphs.
+//! A `cargo` subcommand for building `GraphViz` DOT files of dependency graphs.
 //! This subcommand was originally based off and inspired by the project
 //! [cargo-dot](https://github.com/maxsnew/cargo-dot) by [Max
 //! New](https://github.com/maxsnew)
@@ -13,7 +13,7 @@
 //! (aka "build") dependencies to use orange lines to green diamonds, one would
 //! run the following.
 //!
-//! **NOTE:** GraphViz `dot` needs to be installed to produce the .PNG from the
+//! **NOTE:** `GraphViz` `dot` needs to be installed to produce the .PNG from the
 //! dotfile
 //!
 //! ```ignore
