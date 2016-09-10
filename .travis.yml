@@ -2,7 +2,7 @@ sudo: false
 language: rust
 rust:
   - nightly
-  - nightly-2016-03-22
+  - nightly-2016-09-08
   - beta
   - stable
 matrix:
@@ -15,7 +15,7 @@ before_script:
 script:
   - |
     cargo build &&
-    cargo test 
+    cargo test
 addons:
   apt:
     packages:
