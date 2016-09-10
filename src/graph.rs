@@ -7,7 +7,7 @@ use error::CliResult;
 
 pub type Nd = usize;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub struct Ed(Nd, Nd);
 
 impl Ed {
@@ -91,6 +91,11 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         if let Some(id) = self.find(name) {
             debugln!("remove; name={}; index={}", name, id);
             self.nodes.remove(id);
+            // Remove edges of the removed node.
+            self.edges = self.edges.iter()
+                .filter(|e| !(e.0 == id || e.1 == id))
+                .map(|&e| e)
+                .collect();
             self.shift_edges_after_node(id);
         }
     }
