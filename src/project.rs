@@ -40,24 +40,21 @@ impl<'c, 'o> Project<'c, 'o> {
             deps.iter().map(|dep| dep.0).collect::<Vec<_>>()
         };
 
-        for i in 0..dep_ids_sorted_by_name.len() - 1 {
-            let dep_id_i = dep_ids_sorted_by_name[i];
-
+        for (i, &dep_id_i) in dep_ids_sorted_by_name.iter().enumerate().take(dep_ids_sorted_by_name.len() - 1) {
             // Find other nodes with the same name
             // We need to iterate one more time after the last node to handle the break.
-            for j in i + 1..dep_ids_sorted_by_name.len() + 1 {
+            for (j, &dep) in dep_ids_sorted_by_name.iter().enumerate().take(dep_ids_sorted_by_name.len() + 1).skip(i + 1) {
                 // Stop once we've found a node with a different name
                 // or reached the end of the list.
                 if j >= dep_ids_sorted_by_name.len() ||
-                   dg.nodes[dep_id_i].name != dg.nodes[dep_ids_sorted_by_name[j]].name {
+                   dg.nodes[dep_id_i].name != dg.nodes[dep].name {
                     // If there are at least two nodes with the same name
                     if j >= i + 2 {
                         // Set force_write_ver = true on all nodes
                         // from dep_ids_sorted_by_name[i] to dep_ids_sorted_by_name[j - 1].
                         // Remember: j is pointing on the next node with a *different* name!
                         // Remember also: i..j includes i but excludes j.
-                        for k in i..j {
-                            let dep_id_k = dep_ids_sorted_by_name[k];
+						for &dep_id_k in dep_ids_sorted_by_name.iter().take(j).skip(i) {
                             dg.nodes[dep_id_k].force_write_ver = true;
                         }
                     }
@@ -156,7 +153,7 @@ impl<'c, 'o> Project<'c, 'o> {
 
         let mut dg = DepGraph::new(self.cfg);
 
-        if let Some(ref root) = lock_toml.get("root") {
+        if let Some(root) = lock_toml.get("root") {
             parse_package(&mut dg, root);
         } else {
             return Err(From::from(CliErrorKind::TomlTableRoot));

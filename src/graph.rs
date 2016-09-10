@@ -75,7 +75,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         // Remove edges of the removed node.
         self.edges = self.edges.iter()
             .filter(|e| !(e.0 == id || e.1 == id))
-            .map(|&e| e)
+            .cloned()
             .collect();
         self.shift_edges_after_node(id);
     }

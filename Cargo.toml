@@ -1,6 +1,6 @@
 [package]
 name = "cargo-graph"
-version = "0.2.2"
+version = "0.3.0"
 authors = [
     "Kevin K. <kbknapp@gmail.com>",
     "Max New <maxsnew@gmail.com>"
@@ -16,10 +16,10 @@ keywords = ["cargo", "subcommand", "graph", "dot", "graphviz"]
 name = "cargo-graph"
 
 [dependencies]
-toml = "~0.1.22"
-clap = "~2.2.1"
-ansi_term = { version = "~0.7", optional = true }
-clippy    = { version = "=0.0.55", optional = true }
+toml = "~0.2.1"
+clap = "~2.11.3"
+ansi_term = { version = "~0.9", optional = true }
+clippy    = { version = "=0.0.88", optional = true }
 
 [features]
 default = ["color"]
