@@ -23,6 +23,9 @@ impl<'c, 'o> Project<'c, 'o> {
     pub fn graph(mut self) -> CliResult<DepGraph<'c, 'o>> {
         let (root_deps, root_name, root_version) = try!(self.parse_root_deps());
         let mut dg = try!(self.parse_lock_file());
+        if !dg.set_root(&root_name, &root_version) {
+            return Err(From::from(CliErrorKind::TomlNoName));
+        }
         self.set_resolved_kind(&root_deps, &mut dg);
         if !self.cfg.include_vers {
             Project::show_version_on_duplicates(&mut dg);
