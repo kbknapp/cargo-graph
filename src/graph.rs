@@ -70,7 +70,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
     }
 
     pub fn remove(&mut self, id: usize) {
-        debugln!("remove; name={}; index={}", name, id);
+        debugln!("remove; index={}", id);
         self.nodes.remove(id);
         // Remove edges of the removed node.
         self.edges = self.edges.iter()
