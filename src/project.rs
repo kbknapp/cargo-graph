@@ -21,7 +21,7 @@ impl<'c, 'o> Project<'c, 'o> {
     }
 
     pub fn graph(mut self) -> CliResult<DepGraph<'c, 'o>> {
-        let root_deps = try!(self.parse_root_deps());
+        let (root_deps, root_name, root_version) = try!(self.parse_root_deps());
         let mut dg = try!(self.parse_lock_file());
         self.set_resolved_kind(&root_deps, &mut dg);
         if !self.cfg.include_vers {
@@ -171,13 +171,33 @@ impl<'c, 'o> Project<'c, 'o> {
     }
 
     /// Builds a list of the dependencies declared in the manifest file.
-    pub fn parse_root_deps(&mut self) -> CliResult<Vec<DeclaredDep>> {
+    pub fn parse_root_deps(&mut self) -> CliResult<(Vec<DeclaredDep>, String, String)> {
         debugln!("executing; parse_root_deps;");
         let manifest_path = try!(util::find_manifest_file(self.cfg.manifest_file));
         let manifest_toml = try!(util::toml_from_file(manifest_path));
 
         let mut declared_deps = vec![];
         let mut v = vec![];
+
+        let (root_name, root_version) = {
+            let mut name = None;
+            let mut version = None;
+            if let Some(table) = manifest_toml.get("package") {
+                if let Some(table) = table.as_table() {
+                    if let Some(&Value::String(ref n)) = table.get("name") {
+                        name = Some(n);
+                    }
+                    if let Some(&Value::String(ref v)) = table.get("version") {
+                        version = Some(v);
+                    }
+                }
+            }
+            if let (Some(n), Some(v)) = (name, version) {
+                (n.to_owned(), v.to_owned())
+            } else {
+                return Err(From::from(CliErrorKind::TomlNoName));
+            }
+        };
 
         if let Some(table) = manifest_toml.get("dependencies") {
             if let Some(table) = table.as_table() {
@@ -203,6 +223,7 @@ impl<'c, 'o> Project<'c, 'o> {
 
         debugln!("return=parse_root_deps; self={:#?}", self);
         debugln!("return=parse_root_deps; declared_deps={:#?}", declared_deps);
-        Ok(declared_deps)
+        debugln!("return=parse_root_deps; root_name={:#?}", root_name);
+        Ok((declared_deps, root_name, root_version))
     }
 }

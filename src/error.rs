@@ -12,6 +12,7 @@ pub type CliResult<T> = Result<T, CliError>;
 pub enum CliErrorKind {
     UnknownBoolArg,
     TomlTableRoot,
+    TomlNoName,
     CurrentDir,
     Unknown,
     Io(io::Error),
@@ -23,6 +24,7 @@ impl CliErrorKind {
         match *self {
             CliErrorKind::Generic(ref e) => e,
             CliErrorKind::TomlTableRoot => "No root table found for toml file",
+            CliErrorKind::TomlNoName => "No name for package in toml file",
             CliErrorKind::CurrentDir => "Unable to determine the current working directory",
             CliErrorKind::UnknownBoolArg => "The value supplied isn't valid, either use 'true/false', 'yes/no', or the first letter of either.",
             CliErrorKind::Unknown => "An unknown fatal error has occurred, please consider filing a bug-report!",
