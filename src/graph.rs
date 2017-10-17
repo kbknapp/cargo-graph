@@ -112,7 +112,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
                 debugln!("remove_orphans; idr={}", idr);
                 used[idr] = true;
             }
-            debugln!("remove_orphans; unsued_nodes={:?}", used);
+            debugln!("remove_orphans; unused_nodes={:?}", used);
 
             for (id, &u) in used.iter().enumerate() {
                 if !u {
