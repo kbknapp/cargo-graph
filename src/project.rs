@@ -166,6 +166,7 @@ impl<'c, 'o> Project<'c, 'o> {
         }
 
         debugln!("return=parse_lock_file; self={:#?}", self);
+        debugln!("return=parse_lock_file; dg={:#?}", dg);
         Ok(dg)
     }
 
