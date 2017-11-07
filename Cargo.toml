@@ -11,6 +11,10 @@ repository = "https://github.com/kbknapp/cargo-graph.git"
 readme = "README.md"
 license = "MIT"
 keywords = ["cargo", "subcommand", "graph", "dot", "graphviz"]
+categories = ["development-tools", "development-tools::cargo-plugins"]
+
+[badges]
+travis-ci = {repository = "kbknapp/cargo-graph"}
 
 [[bin]]
 name = "cargo-graph"
