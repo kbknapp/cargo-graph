@@ -158,8 +158,6 @@ impl<'c, 'o> Project<'c, 'o> {
 
         if let Some(root) = lock_toml.get("root") {
             parse_package(&mut dg, root);
-        } else {
-            return Err(From::from(CliErrorKind::TomlTableRoot));
         }
 
         if let Some(&Value::Array(ref packages)) = lock_toml.get("package") {
