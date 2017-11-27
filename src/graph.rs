@@ -70,7 +70,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
     }
 
     pub fn remove(&mut self, id: usize) {
-        debugln!("remove; name={}; index={}", name, id);
+        debugln!("remove; index={}", id);
         self.nodes.remove(id);
         // Remove edges of the removed node.
         self.edges = self.edges.iter()
@@ -112,7 +112,7 @@ impl<'c, 'o> DepGraph<'c, 'o> {
                 debugln!("remove_orphans; idr={}", idr);
                 used[idr] = true;
             }
-            debugln!("remove_orphans; unsued_nodes={:?}", used);
+            debugln!("remove_orphans; unused_nodes={:?}", used);
 
             for (id, &u) in used.iter().enumerate() {
                 if !u {
@@ -166,11 +166,47 @@ impl<'c, 'o> DepGraph<'c, 'o> {
         }
     }
 
-    pub fn find_or_add(&mut self, name: &str, ver: &str) -> usize {
+    pub fn set_root(&mut self, name: &str, ver: &str) -> bool {
+        let root_id = if let Some(i) = self.find(name, ver) {
+            i
+        } else {
+            return false;
+        };
+        if root_id == 0 {
+            return true;
+        }
+
+        // Swap with 0
+        self.nodes.swap(0, root_id);
+
+        // Adjust edges
+        for edge in self.edges.iter_mut() {
+            if edge.0 == 0 {
+                edge.0 = root_id;
+            } else if edge.0 == root_id {
+                edge.0 = 0;
+            }
+            if edge.1 == 0 {
+                edge.1 = root_id;
+            } else if edge.1 == root_id {
+                edge.1 = 0;
+            }
+        }
+        true
+    }
+
+    pub fn find(&self, name: &str, ver: &str) -> Option<usize> {
         for (i, d) in self.nodes.iter().enumerate() {
             if d.name == name && d.ver == ver {
-                return i;
+                return Some(i);
             }
+        }
+        None
+    }
+
+    pub fn find_or_add(&mut self, name: &str, ver: &str) -> usize {
+        if let Some(i) = self.find(name, ver) {
+            return i;
         }
         self.nodes.push(ResolvedDep::new(name.to_owned(), ver.to_owned()));
         self.nodes.len() - 1
