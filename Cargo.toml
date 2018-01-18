@@ -1,6 +1,6 @@
 [package]
 name = "cargo-graph"
-version = "0.3.1"
+version = "0.3.2"
 authors = [
     "Kevin K. <kbknapp@gmail.com>",
     "Max New <maxsnew@gmail.com>"
@@ -20,8 +20,8 @@ travis-ci = {repository = "kbknapp/cargo-graph"}
 name = "cargo-graph"
 
 [dependencies]
-toml = "~0.2.1"
-clap = "~2.11.3"
+toml = "0.2.1"
+clap = "2.29.2"
 ansi_term = { version = "~0.9", optional = true }
 clippy    = { version = "=0.0.88", optional = true }
 

@@ -1,3 +1,17 @@
+<a name="v0.3.2"></a>
+### v0.3.2 (2018-01-18)
+
+
+#### Documentation
+
+*   adds a CONTRIBUTORS.md ([5cfbeea1](https://github.com/kbknapp/cargo-graph/commit/5cfbeea1b82975182b9b74600b9cb61fcf282a09))
+
+#### Features
+
+*   show different versions of a crate separately ([d6d4a39e](https://github.com/kbknapp/cargo-graph/commit/d6d4a39ebdffd008de117ae7bc04731496222af4), closes [#27](https://github.com/kbknapp/cargo-graph/issues/27))
+
+
+
 <a name="v0.2.0"></a>
 ## v0.2.0 (2015-12-11)
 
