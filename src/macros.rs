@@ -1,3 +1,4 @@
+#[allow(unused_macros)]
 macro_rules! wlnerr(
     ($($arg:tt)*) => ({
         use std::io::{Write, stderr};
@@ -5,6 +6,7 @@ macro_rules! wlnerr(
     })
 );
 
+#[allow(unused_macros)]
 macro_rules! werr(
     ($($arg:tt)*) => ({
         use std::io::{Write, stderr};
@@ -12,6 +14,7 @@ macro_rules! werr(
     })
 );
 
+#[allow(unused_macros)]
 macro_rules! verbose(
     ($cfg:expr, $($arg:tt)*) => ({
         if $cfg.verbose {
@@ -21,6 +24,7 @@ macro_rules! verbose(
     })
 );
 
+#[allow(unused_macros)]
 macro_rules! verboseln(
     ($cfg:expr, $($arg:tt)*) => ({
         if $cfg.verbose {
@@ -30,6 +34,7 @@ macro_rules! verboseln(
     })
 );
 
+#[allow(unused_macros)]
 macro_rules! regex(
     ($s:expr) => ({::regex::Regex::new($s).unwrap()})
 );
@@ -46,12 +51,14 @@ macro_rules! debug {
     ($fmt:expr, $($arg:tt)*) => (println!(concat!("**DEBUG** ",$fmt), $($arg)*));
 }
 
+#[cfg_attr(not(feature = "debug"), allow(unused_macros))]
 #[cfg(not(feature = "debug"))]
 macro_rules! debugln {
     ($fmt:expr) => ();
     ($fmt:expr, $($arg:tt)*) => ();
 }
 
+#[cfg_attr(not(feature = "debug"), allow(unused_macros))]
 #[cfg(not(feature = "debug"))]
 macro_rules! debug {
     ($fmt:expr) => ();
